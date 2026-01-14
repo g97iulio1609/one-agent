@@ -1,0 +1,97 @@
+{
+  "name": "@onecoach/one-agent",
+  "version": "4.1.0-alpha.0",
+  "type": "module",
+  "description": "OneAgent SDK 4.1 - AI agent framework with durable streaming and real-time progress",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./framework": {
+      "types": "./src/framework/index.ts",
+      "default": "./src/framework/index.ts"
+    },
+    "./adapters/*": {
+      "types": "./src/adapters/*.ts",
+      "default": "./src/adapters/*.ts"
+    },
+    "./core/*": {
+      "types": "./src/core/*.ts",
+      "default": "./src/core/*.ts"
+    },
+    "./agents/*": {
+      "types": "./src/agents/*.ts",
+      "default": "./src/agents/*.ts"
+    },
+    "./mesh/*": {
+      "types": "./src/mesh/*.ts",
+      "default": "./src/mesh/*.ts"
+    },
+    "./registry/*": {
+      "types": "./src/registry/*.ts",
+      "default": "./src/registry/*.ts"
+    },
+    "./schemas/*": {
+      "types": "./src/schemas/*.ts",
+      "default": "./src/schemas/*.ts"
+    },
+    "./utils/*": {
+      "types": "./src/utils/*.ts",
+      "default": "./src/utils/*.ts"
+    },
+    "./sdk-agents/*": {
+      "types": "./src/sdk-agents/*/index.ts",
+      "default": "./src/sdk-agents/*/index.ts"
+    },
+    "./api": {
+      "types": "./src/framework/api.ts",
+      "default": "./src/framework/api.ts"
+    }
+  },
+  "scripts": {
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "3.0.2",
+    "@ai-sdk/openai": "3.0.2",
+    "@modelcontextprotocol/sdk": "^1.11.0",
+    "@onecoach/constants": "workspace:*",
+    "@onecoach/lib-ai": "workspace:*",
+    "@onecoach/lib-metadata": "workspace:*",
+    "@onecoach/lib-shared": "workspace:*",
+    "@onecoach/schemas": "workspace:*",
+    "@openrouter/ai-sdk-provider": "6.0.0-alpha.1",
+    "@prisma/client": "^7.2.0",
+    "@workflow/core": "4.0.1-beta.36",
+    "@workflow/ai": "4.0.1-beta.44",
+    "ai": "6.0.19",
+    "yaml": "^2.8.2",
+    "zod": "4.3.5",
+    "@onecoach/types": "workspace:*",
+    "@onecoach/types-core": "workspace:*",
+    "@onecoach/types-workout": "workspace:*",
+    "@onecoach/types-nutrition": "workspace:*",
+    "@onecoach/types-chat": "workspace:*",
+    "@onecoach/types-analytics": "workspace:*",
+    "@onecoach/types-ai": "workspace:*",
+    "@onecoach/types-ui": "workspace:*",
+    "@onecoach/types-domain": "workspace:*",
+    "@onecoach/types-database": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.3",
+    "typescript": "^5.9.3"
+  },
+  "peerDependencies": {
+    "zod": "^4.3.5",
+    "@workflow/world-postgres": "4.1.0-beta.27"
+  },
+  "peerDependenciesMeta": {
+    "@workflow/world-postgres": {
+      "optional": true
+    }
+  }
+}

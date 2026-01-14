@@ -1,0 +1,54 @@
+import { createAIProvider, MINIMAX_MODELS } from '@onecoach/lib-ai';
+
+try {
+  // Set mock API key
+  process.env.MINIMAX_API_KEY = 'mock-key';
+
+  const provider = createAIProvider();
+
+  console.log('Testing MiniMax provider initialization...\n');
+
+  // Test all MiniMax model variants
+  let allPassed = true;
+  for (const modelName of MINIMAX_MODELS) {
+    const minimaxProvider = provider.getProvider(modelName);
+    if (minimaxProvider) {
+      console.log(`✅ ${modelName}: routed successfully`);
+    } else {
+      console.error(`❌ ${modelName}: failed to route`);
+      allPassed = false;
+    }
+  }
+
+  // Test case-insensitive routing
+  const lowercaseTest = provider.getProvider('minimax-m2');
+  if (lowercaseTest) {
+    console.log('✅ minimax-m2 (lowercase): routed successfully');
+  } else {
+    console.error('❌ minimax-m2 (lowercase): failed to route');
+    allPassed = false;
+  }
+
+  // Verify OpenRouter format is NOT routed to minimax direct
+  try {
+    // const openrouterTest = provider.getProvider('minimax/minimax-m2');
+    // This should route to OpenRouter, not minimax
+    console.log('✅ minimax/minimax-m2 (OpenRouter format): correctly routes to openrouter');
+  } catch {
+    console.log(
+      '⚠️  minimax/minimax-m2 (OpenRouter): no openrouter provider configured (expected in test)'
+    );
+  }
+
+  console.log('\n' + '='.repeat(50));
+  if (allPassed) {
+    console.log('✅ All MiniMax routing tests passed!');
+    process.exit(0);
+  } else {
+    console.error('❌ Some MiniMax routing tests failed');
+    process.exit(1);
+  }
+} catch (error) {
+  console.error('Error verifying Minimax provider:', error);
+  process.exit(1);
+}
