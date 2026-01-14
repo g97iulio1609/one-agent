@@ -181,56 +181,26 @@ export async function executeNode<TOutput = unknown>(
     context.meta.updatedAt = new Date();
 
     // Check for durable execution mode (v4.0+)
+    // Both Manager and Worker agents use executeDurable() which routes to agentWorkflow()
+    // agentWorkflow() handles both modes:
+    // - Worker: executeWorkerMode() - direct ToolLoopAgent execution
+    // - Manager: executeManagerMode() - orchestrates WORKFLOW.md steps with WDK durability
     if (manifest.config.executionMode === 'durable') {
-      console.log(`[Engine] Executing in DURABLE mode: ${manifest.id}`);
+      const agentType = isManager(manifest) ? 'Manager' : 'Worker';
+      console.log(`[Engine] Executing ${agentType} in DURABLE mode: ${manifest.id}`);
 
       // Dynamic import to avoid bundling WDK when not needed
       const { executeDurable } = await import('./durable');
 
-      if (isManager(manifest)) {
-        // TODO: Implement durable workflow execution for Managers
-        // For now, run the workflow steps then use executeDurable for synthesis
-        console.log('[Engine] Manager + Durable mode: executing workflow then durable synthesis');
+      // Set basePath for proper nested agent resolution
+      context.basePath = manifest.path;
 
-        const previousBasePath = context.basePath;
-        context.basePath = manifest.path;
-        const workflowContext = await executeWorkflow(manifest.workflow!, validatedInput, context);
-        context.basePath = previousBasePath;
-
-        // Check skipSynthesis
-        if (manifest.config.skipSynthesis) {
-          const outputKey = manifest.config.outputArtifact || '_output';
-          const output = getNestedArtifact(workflowContext.artifacts, outputKey);
-
-          if (output === undefined) {
-            throw new Error(
-              `[Engine] skipSynthesis: artifact "${outputKey}" not found. ` +
-                `Available: ${Object.keys(workflowContext.artifacts).join(', ')}`
-            );
-          }
-
-          return {
-            success: true,
-            output: output as TOutput,
-            meta: {
-              executionId: context.executionId,
-              duration: Date.now() - startTime,
-              tokensUsed: context.meta.tokensUsed,
-              costUSD: context.meta.costUSD,
-            },
-          };
-        }
-
-        // Use durable for synthesis
-        return executeDurable<TOutput>(manifest, workflowContext.artifacts, workflowContext, {
-          resumeFromRunId,
-        });
-      } else {
-        // Worker in durable mode
-        return executeDurable<TOutput>(manifest, validatedInput, context, {
-          resumeFromRunId,
-        });
-      }
+      // executeDurable() -> agentWorkflow() handles both Manager and Worker modes
+      // - Manager: orchestrates workflow steps via executeManagerMode()
+      // - Worker: direct execution via executeWorkerMode()
+      return executeDurable<TOutput>(manifest, validatedInput, context, {
+        resumeFromRunId,
+      });
     }
 
     // Standard (non-durable) execution
