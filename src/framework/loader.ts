@@ -147,9 +147,9 @@ export async function loadAgentManifest(
     }
   }
 
-  // 4. Load schemas from schema.ts references
-  const inputSchema = await loadSchemaRef(agentJson.interface.input.$ref, fullPath);
-  const outputSchema = await loadSchemaRef(agentJson.interface.output.$ref, fullPath);
+  // 4. Load schemas from schema.ts references (passing agentId for registry key derivation)
+  const inputSchema = await loadSchemaRef(agentJson.interface.input.$ref, fullPath, agentJson.id);
+  const outputSchema = await loadSchemaRef(agentJson.interface.output.$ref, fullPath, agentJson.id);
 
   // 5. Build manifest
   const manifest: AgentManifest = {
@@ -195,9 +195,19 @@ async function loadMarkdownContent(filePath: string): Promise<string> {
  * 1. Registry key: "{agentId}:{input|output}" (preferred for bundled envs)
  * 2. File path: "./schema.ts#SchemaName" (fallback, requires dynamic import)
  *
+ * When agentId is provided and ref uses file format, automatically derives
+ * the registry key to support bundled environments like Next.js Turbopack.
+ *
+ * @param ref - Schema reference from agent.json
+ * @param basePath - Base path for resolving file refs
+ * @param agentId - Optional agent ID for deriving registry key
  * @throws Error if schema cannot be loaded (no silent z.any() fallback)
  */
-async function loadSchemaRef(ref: string, basePath: string): Promise<import('zod').ZodSchema> {
+async function loadSchemaRef(
+  ref: string,
+  basePath: string,
+  agentId?: string
+): Promise<import('zod').ZodSchema> {
   const { getSchema } = await import('./registry');
 
   // 1. Try registry first (preferred for bundled environments)
@@ -207,7 +217,20 @@ async function loadSchemaRef(ref: string, basePath: string): Promise<import('zod
     return registrySchema;
   }
 
-  // 2. Fallback to file path format: "./schema.ts#InputSchema"
+  // 2. If file ref format and agentId provided, derive registry key
+  if (ref.includes('#') && agentId) {
+    // Derive input/output from schema name (e.g., "WorkoutGenerationInputSchema" → "input")
+    const schemaType = ref.toLowerCase().includes('input') ? 'input' : 'output';
+    const registryKey = `${agentId}:${schemaType}`;
+
+    const derivedSchema = getSchema(registryKey);
+    if (derivedSchema) {
+      console.log(`[Loader] Schema loaded from registry (derived): ${ref} → ${registryKey}`);
+      return derivedSchema;
+    }
+  }
+
+  // 3. Fallback to file path format: "./schema.ts#InputSchema"
   if (!ref.includes('#')) {
     throw new Error(
       `[Loader] Schema "${ref}" not found.\n` +
