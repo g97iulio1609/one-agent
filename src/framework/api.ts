@@ -105,12 +105,13 @@ export async function createAgentDurableResponse(
     });
 
     // Build response headers
+    // Note: Using lowercase for consistency with HTTP/2 and browser handling
     const responseHeaders = new Headers({
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
       Connection: 'keep-alive',
-      'X-Workflow-Run-Id': run.runId,
-      'X-Execution-Id': executionId,
+      'x-workflow-run-id': run.runId,
+      'x-execution-id': executionId,
     });
 
     for (const [key, value] of Object.entries(headers)) {

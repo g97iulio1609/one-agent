@@ -7,12 +7,15 @@
  * Follows Single Responsibility Principle - only handles worker execution.
  *
  * @since v4.1
+ * @since v5.0 - Added module-level caching for dynamic imports (performance optimization)
+ * @since v5.1 - AI-driven progress via _progress field in partialOutputStream
+ * @since v5.2 - Added progressRange for mapping worker progress to global workflow progress
  */
 
 import { ToolLoopAgent, stepCountIs, Output } from 'ai';
 import { FatalError, RetryableError, getStepMetadata } from 'workflow';
 import type { UIMessageChunk } from 'ai';
-import type { ProgressField } from '../../types';
+import type { ProgressRange } from '../types';
 import {
   normalizeAgentPath,
   estimateTokens,
@@ -20,6 +23,56 @@ import {
   extractProgress,
   createProgressField,
 } from '../helpers';
+
+// ============================================================================
+// MODULE-LEVEL CACHING
+// ============================================================================
+// Cache dynamic imports at module level to avoid repeated import overhead
+// during WDK workflow replay. Each step execution re-runs this function,
+// so caching saves ~100-200ms per step.
+
+let _cachedModules: {
+  loadAgentManifest: typeof import('../../loader').loadAgentManifest;
+  buildSystemPrompt: typeof import('../../worker').buildSystemPrompt;
+  connectToMCPServers: typeof import('../../mcp').connectToMCPServers;
+  mcpToolsToAiSdk: typeof import('../../mcp').mcpToolsToAiSdk;
+  getAgentTools: typeof import('../../registry').getAgentTools;
+  PROGRESS_PROMPT_INSTRUCTIONS: typeof import('../../types').PROGRESS_PROMPT_INSTRUCTIONS;
+  getModelByTier: typeof import('@onecoach/lib-ai').getModelByTier;
+  AIProviderConfigService: typeof import('@onecoach/lib-ai').AIProviderConfigService;
+  createModelAsync: typeof import('@onecoach/lib-ai').createModelAsync;
+} | null = null;
+
+/**
+ * Load and cache all required modules for worker execution.
+ * Returns cached modules on subsequent calls.
+ */
+async function getCachedModules() {
+  if (_cachedModules) return _cachedModules;
+
+  const [loaderMod, workerMod, mcpMod, registryMod, typesMod, libAiMod] = await Promise.all([
+    import('../../loader'),
+    import('../../worker'),
+    import('../../mcp'),
+    import('../../registry'),
+    import('../../types'),
+    import('@onecoach/lib-ai'),
+  ]);
+
+  _cachedModules = {
+    loadAgentManifest: loaderMod.loadAgentManifest,
+    buildSystemPrompt: workerMod.buildSystemPrompt,
+    connectToMCPServers: mcpMod.connectToMCPServers,
+    mcpToolsToAiSdk: mcpMod.mcpToolsToAiSdk,
+    getAgentTools: registryMod.getAgentTools,
+    PROGRESS_PROMPT_INSTRUCTIONS: typesMod.PROGRESS_PROMPT_INSTRUCTIONS,
+    getModelByTier: libAiMod.getModelByTier,
+    AIProviderConfigService: libAiMod.AIProviderConfigService,
+    createModelAsync: libAiMod.createModelAsync,
+  };
+
+  return _cachedModules;
+}
 
 /**
  * Result from worker step execution.
@@ -29,9 +82,42 @@ export interface WorkerStepResult {
   usage?: { totalTokens?: number };
 }
 
+// ============================================================================
+// PROGRESS RANGE MAPPING
+// ============================================================================
+
+/**
+ * Map a local progress value (0-100) to a global progress range.
+ *
+ * Example: If progressRange = { start: 20, end: 40 } and localProgress = 50,
+ * the global progress = 20 + (50/100) * (40-20) = 30
+ *
+ * @param localProgress - Progress within the worker (0-100)
+ * @param range - Global progress range for this step, or undefined for standalone worker
+ * @returns Mapped global progress value
+ */
+function mapProgressToRange(localProgress: number, range?: ProgressRange): number {
+  if (!range) {
+    // Standalone worker (not in a workflow) - use local progress directly
+    return localProgress;
+  }
+
+  const { start, end } = range;
+  return Math.round(start + (localProgress / 100) * (end - start));
+}
+
 /**
  * Execute a Worker sub-agent with streaming progress.
- * Uses ToolLoopAgent internally and streams _progress events.
+ * Uses ToolLoopAgent internally and streams AI-driven _progress events.
+ *
+ * Progress streaming follows the OneFlight pattern:
+ * 1. AI populates _progress field in its structured output
+ * 2. partialOutputStream emits partial objects with _progress
+ * 3. We extract and forward progress to WDK stream
+ *
+ * Progress Range Mapping (v5.2):
+ * When called from a workflow, progressRange maps local 0-100 to the step's slice.
+ * When called standalone, progressRange is undefined and local progress is used directly.
  *
  * @param writable - WritableStream passed from the workflow
  * @param agentId - Agent identifier
@@ -39,6 +125,7 @@ export interface WorkerStepResult {
  * @param inputJson - JSON-serialized input
  * @param userId - Optional user ID
  * @param stepPrefix - Optional prefix for progress step names (for nested context)
+ * @param progressRange - Optional range for mapping local progress to global workflow progress
  *
  * WDK Configuration:
  * - maxRetries: 3 (with exponential backoff)
@@ -49,7 +136,8 @@ export async function executeWorkerStep(
   basePath: string,
   inputJson: string,
   _userId?: string,
-  stepPrefix?: string
+  stepPrefix?: string,
+  progressRange?: ProgressRange
 ): Promise<WorkerStepResult> {
   'use step';
 
@@ -57,29 +145,46 @@ export async function executeWorkerStep(
   const writer = writable.getWriter();
   const prefix = stepPrefix ? `${stepPrefix}:` : '';
 
+  // Determine if we're in a workflow (should NOT emit 100% at end)
+  const isInWorkflow = !!progressRange;
+
   try {
     const input = JSON.parse(inputJson);
 
     await writeProgress(
       writer,
-      createProgressField(`${prefix}init`, 'Initializing...', 5, 'loading')
+      createProgressField(
+        `${prefix}init`,
+        'Initializing...',
+        mapProgressToRange(5, progressRange),
+        'loading'
+      )
     );
 
-    // Dynamically import framework modules
-    const { loadAgentManifest } = await import('../../loader');
-    const { buildSystemPrompt } = await import('../../worker');
-    const { connectToMCPServers, mcpToolsToAiSdk } = await import('../../mcp');
-    const { getAgentTools } = await import('../../registry');
-    const { PROGRESS_PROMPT_INSTRUCTIONS } = await import('../../types');
-    const { getModelByTier, AIProviderConfigService, createModelAsync } =
-      await import('@onecoach/lib-ai');
+    // Load cached modules (performance optimization: avoid repeated imports)
+    const {
+      loadAgentManifest,
+      buildSystemPrompt,
+      connectToMCPServers,
+      mcpToolsToAiSdk,
+      getAgentTools,
+      PROGRESS_PROMPT_INSTRUCTIONS,
+      getModelByTier,
+      AIProviderConfigService,
+      createModelAsync,
+    } = await getCachedModules();
 
     const agentPath = normalizeAgentPath(agentId);
     const manifest = await loadAgentManifest(agentPath, basePath);
 
     await writeProgress(
       writer,
-      createProgressField(`${prefix}loading`, 'Loading agent configuration...', 10, 'loading')
+      createProgressField(
+        `${prefix}loading`,
+        'Loading agent configuration...',
+        mapProgressToRange(10, progressRange),
+        'loading'
+      )
     );
 
     // Build system prompt with progress instructions
@@ -101,7 +206,12 @@ export async function executeWorkerStep(
       try {
         await writeProgress(
           writer,
-          createProgressField(`${prefix}connecting`, 'Connecting to services...', 15, 'loading')
+          createProgressField(
+            `${prefix}connecting`,
+            'Connecting to services...',
+            mapProgressToRange(15, progressRange),
+            'loading'
+          )
         );
 
         const mcpTools = await connectToMCPServers(manifest.mcpServers);
@@ -160,46 +270,112 @@ export async function executeWorkerStep(
 
     await writeProgress(
       writer,
-      createProgressField(`${prefix}executing`, 'Processing request...', 20, 'loading')
+      createProgressField(
+        `${prefix}executing`,
+        'Processing request...',
+        mapProgressToRange(20, progressRange),
+        'loading'
+      )
     );
 
     // Execute with streaming
     const streamResult = await agent.stream({ prompt: userPrompt });
 
-    let lastProgress: ProgressField | null = null;
+    // Track last emitted progress to prevent duplicates and for interpolation
+    let lastEmittedStep: string | null = null;
+    let lastEmittedLocalProgress = 20; // Track LOCAL progress (0-100) for internal calculations
+    let aiProgressCount = 0;
     let tokensUsed = 0;
 
-    // Process fullStream for tool events
-    const fullStreamPromise = processToolStream(
-      streamResult.fullStream,
-      writer,
-      prefix,
-      lastProgress,
-      (p) => {
-        lastProgress = p;
+    // Process partialOutputStream for AI-driven _progress (primary source)
+    // This is the OneFlight pattern: AI populates _progress, we extract and stream it
+    const progressPromise = (async () => {
+      try {
+        for await (const partial of streamResult.partialOutputStream) {
+          const progress = extractProgress(partial);
+          if (progress) {
+            // Deduplicate by step name
+            const stepKey = `${prefix}${progress.step}`;
+            if (stepKey !== lastEmittedStep) {
+              progress.step = stepKey;
+              // Map the AI's progress (which is local 0-100) to global range
+              progress.estimatedProgress = mapProgressToRange(
+                progress.estimatedProgress,
+                progressRange
+              );
+              await writeProgress(writer, progress);
+              lastEmittedStep = stepKey;
+              lastEmittedLocalProgress = progress.estimatedProgress;
+              aiProgressCount++;
+            }
+          }
+        }
+      } catch (err) {
+        console.warn(`[WorkerStep] ${agentId} partialOutputStream error:`, err);
       }
-    );
+    })();
 
-    // Process partialOutputStream for AI-driven _progress
-    const partialStreamPromise = processProgressStream(
-      streamResult.partialOutputStream,
-      writer,
-      prefix,
-      (p) => {
-        lastProgress = p;
-      },
-      agentId
-    );
+    // Process fullStream for tool events (secondary source, fallback progress)
+    // Only emit tool progress if AI isn't providing progress
+    const toolStreamPromise = (async () => {
+      try {
+        for await (const chunk of streamResult.fullStream) {
+          if (chunk.type === 'tool-call') {
+            // Only emit synthetic tool progress if AI hasn't been providing progress
+            if (aiProgressCount === 0) {
+              // Calculate local progress (capped at 80 to leave room for completion)
+              const localProgress = Math.min(lastEmittedLocalProgress + 10, 80);
+              const toolProgress = createProgressField(
+                `${prefix}tool:${chunk.toolName}`,
+                `Calling ${chunk.toolName}...`,
+                mapProgressToRange(localProgress, progressRange),
+                'search',
+                {
+                  toolName: chunk.toolName,
+                  adminDetails:
+                    'input' in chunk
+                      ? `Args: ${JSON.stringify(chunk.input).slice(0, 200)}`
+                      : undefined,
+                }
+              );
+              await writeProgress(writer, toolProgress);
+              lastEmittedLocalProgress = localProgress;
+            }
+          }
+        }
+      } catch (err) {
+        console.warn(`[WorkerStep] ${agentId} fullStream error:`, err);
+      }
+    })();
 
-    await Promise.all([fullStreamPromise, partialStreamPromise]);
+    await Promise.all([progressPromise, toolStreamPromise]);
+
+    // Log AI progress statistics for debugging
+    console.log(`[WorkerStep] ${agentId} AI emitted ${aiProgressCount} progress updates`);
 
     const finalOutput = await streamResult.output;
     tokensUsed = estimateTokens(systemPrompt, userPrompt, finalOutput);
 
-    await writeProgress(
-      writer,
-      createProgressField(`${prefix}complete`, 'Complete!', 100, 'success')
-    );
+    // Only emit 100% completion if we're a standalone worker (not in a workflow).
+    // When in a workflow, the Manager controls progress and will emit
+    // progress updates for each step's completion from the workflow loop.
+    if (!isInWorkflow) {
+      await writeProgress(
+        writer,
+        createProgressField(`${prefix}complete`, 'Complete!', 100, 'success')
+      );
+    } else {
+      // Emit progress at end of this step's range (but not 100%)
+      await writeProgress(
+        writer,
+        createProgressField(
+          `${prefix}step-done`,
+          'Step completed',
+          mapProgressToRange(95, progressRange), // 95% of this step's range
+          'success'
+        )
+      );
+    }
 
     console.log(`[WorkerStep] ${agentId} execution complete`);
 
@@ -222,72 +398,3 @@ export async function executeWorkerStep(
 
 // WDK retry config
 (executeWorkerStep as unknown as { maxRetries: number }).maxRetries = 3;
-
-/**
- * Process tool call/result events from fullStream.
- */
-async function processToolStream(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  fullStream: AsyncIterable<any>,
-  writer: WritableStreamDefaultWriter<UIMessageChunk>,
-  prefix: string,
-  lastProgress: ProgressField | null,
-  setLastProgress: (p: ProgressField) => void
-): Promise<void> {
-  try {
-    for await (const chunk of fullStream) {
-      if (chunk.type === 'tool-call') {
-        const toolInput = 'input' in chunk ? chunk.input : undefined;
-        const toolProgress = createProgressField(
-          `${prefix}tool:${chunk.toolName}`,
-          `Calling ${chunk.toolName}...`,
-          lastProgress?.estimatedProgress ?? 40,
-          'search',
-          {
-            toolName: chunk.toolName,
-            adminDetails: toolInput
-              ? `Args: ${JSON.stringify(toolInput).slice(0, 200)}`
-              : undefined,
-          }
-        );
-        await writeProgress(writer, toolProgress);
-      } else if (chunk.type === 'tool-result') {
-        const resultProgress = createProgressField(
-          `${prefix}tool:${chunk.toolName}:result`,
-          `${chunk.toolName} completed`,
-          Math.min((lastProgress?.estimatedProgress ?? 40) + 10, 80),
-          'success',
-          { toolName: chunk.toolName }
-        );
-        await writeProgress(writer, resultProgress);
-        setLastProgress(resultProgress);
-      }
-    }
-  } catch (err) {
-    console.warn(`[WorkerStep] fullStream error:`, err);
-  }
-}
-
-/**
- * Process AI-driven _progress fields from partialOutputStream.
- */
-async function processProgressStream(
-  partialStream: AsyncIterable<unknown>,
-  writer: WritableStreamDefaultWriter<UIMessageChunk>,
-  prefix: string,
-  setLastProgress: (p: ProgressField) => void,
-  agentId: string
-): Promise<void> {
-  try {
-    for await (const partial of partialStream) {
-      const progress = extractProgress(partial);
-      if (progress) {
-        progress.step = `${prefix}${progress.step}`;
-        await writeProgress(writer, progress);
-        setLastProgress(progress);
-      }
-    }
-  } catch (err) {
-    console.warn(`[WorkerStep] ${agentId} partialOutputStream error:`, err);
-  }
-}

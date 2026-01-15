@@ -26,10 +26,12 @@
  * @since v4.0 - Initial durable execution
  * @since v4.1 - Added Manager orchestration with WDK-native patterns
  * @since v4.2 - Refactored to modular structure (KISS/DRY/SOLID), fixed serialization
+ * @since v5.1 - Improved progress messages for workflows
  */
 
 import { getWritable, FatalError } from 'workflow';
 import type { UIMessageChunk } from 'ai';
+import type { WorkflowStep, CallStep, ParallelStep, LoopStep, TransformStep } from '../types';
 
 import type {
   AgentWorkflowParams,
@@ -47,6 +49,87 @@ import {
   closeStreamStep,
 } from './steps';
 import { executeWorkflowStep } from './orchestration';
+
+// ============================================================================
+// USER-FRIENDLY PROGRESS MESSAGES
+// ============================================================================
+
+/**
+ * Icon hints for different step types
+ */
+const STEP_ICONS: Record<string, 'search' | 'analyze' | 'compare' | 'loading' | 'success'> = {
+  'exercise-selector': 'search',
+  'workout-planner': 'analyze',
+  'progression-calculator': 'compare',
+  'day-generator': 'loading',
+  'progression-diff-generator': 'compare',
+  validator: 'analyze',
+  assembleWeeksFromDiffs: 'loading',
+};
+
+/**
+ * Generate a user-friendly message for a workflow step.
+ * Uses the step type and agent ID to create context-aware messages.
+ */
+function getStepUserMessage(step: WorkflowStep, stepIndex: number, totalSteps: number): string {
+  const baseProgress = `(${stepIndex + 1}/${totalSteps})`;
+
+  switch (step.type) {
+    case 'call': {
+      const callStep = step as CallStep;
+      const agentName = callStep.agentId.split('/').pop() || callStep.agentId;
+
+      // Map agent names to user-friendly messages
+      const agentMessages: Record<string, string> = {
+        'exercise-selector': 'Selecting optimal exercises...',
+        'workout-planner': 'Planning training structure...',
+        'progression-calculator': 'Calculating progression...',
+        'day-generator': 'Generating workout days...',
+        'progression-diff-generator': 'Building week progression...',
+        validator: 'Validating program...',
+      };
+
+      return agentMessages[agentName] || `Processing ${agentName}... ${baseProgress}`;
+    }
+
+    case 'parallel': {
+      const parallelStep = step as ParallelStep;
+      const branchCount = parallelStep.branches.length;
+      return `Running ${branchCount} parallel tasks...`;
+    }
+
+    case 'loop': {
+      const loopStep = step as LoopStep;
+      return `Processing ${loopStep.itemVar} items...`;
+    }
+
+    case 'transform': {
+      const transformStep = step as TransformStep;
+      const transformMessages: Record<string, string> = {
+        assembleWeeksFromDiffs: 'Assembling final program...',
+        'merge-exercises': 'Matching exercises with catalog...',
+      };
+      return transformMessages[transformStep.transformId] || `Applying ${transformStep.name}...`;
+    }
+
+    default:
+      return `Step ${stepIndex + 1}/${totalSteps}: ${step.name}`;
+  }
+}
+
+/**
+ * Get icon hint for a step based on its type or agent ID.
+ */
+function getStepIcon(step: WorkflowStep): 'search' | 'analyze' | 'compare' | 'loading' | 'success' {
+  if (step.type === 'call') {
+    const agentName = (step as CallStep).agentId.split('/').pop() || '';
+    return STEP_ICONS[agentName] || 'loading';
+  }
+  if (step.type === 'transform') {
+    return STEP_ICONS[(step as TransformStep).transformId] || 'loading';
+  }
+  return 'loading';
+}
 
 /**
  * Durable agent workflow function with streaming and Manager orchestration.
@@ -131,6 +214,10 @@ async function executeWorkerMode(
     params.userId
   );
 
+  // Emit lightweight finish signal before closing
+  // NOTE: We don't pass the full output here to avoid WDK step serialization overhead
+  // The actual output is returned via AgentWorkflowResult
+  await writeFinishStep(writable, { completed: true });
   await closeStreamStep(writable);
 
   return {
@@ -166,37 +253,45 @@ async function executeManagerMode(
     input: JSON.parse(params.inputJson),
   };
 
-  // Create execution context with serializable manifest info
-  const execCtx: StepExecutionContext = {
-    writable,
-    manifestInfo,
-    params,
-  };
-
   // Write initial progress
   await writeProgressStep(
     writable,
-    createProgressField('workflow:start', 'Starting workflow...', 5, 'loading')
+    createProgressField('workflow:start', 'Starting workout generation...', 5, 'loading')
   );
 
-  // Execute workflow steps
+  // Execute workflow steps with progress range mapping
+  // Progress is distributed across 10-90% range (reserving 0-10% for init, 90-100% for completion)
   const totalSteps = manifestInfo.workflow!.steps.length;
+  const PROGRESS_START = 10;
+  const PROGRESS_END = 90;
+  const progressPerStep = (PROGRESS_END - PROGRESS_START) / totalSteps;
+
   for (let i = 0; i < totalSteps; i++) {
     const step = manifestInfo.workflow!.steps[i];
 
-    // Update progress based on step position
-    const stepProgress = Math.round(10 + (i / totalSteps) * 80);
+    // Calculate progress range for this step
+    const stepStart = Math.round(PROGRESS_START + i * progressPerStep);
+    const stepEnd = Math.round(PROGRESS_START + (i + 1) * progressPerStep);
+    const progressRange = { start: stepStart, end: stepEnd };
+
+    const userMessage = getStepUserMessage(step, i, totalSteps);
+    const iconHint = getStepIcon(step);
+
+    // Emit progress at start of step
     await writeProgressStep(
       writable,
-      createProgressField(
-        `workflow:step:${i + 1}`,
-        `Step ${i + 1}/${totalSteps}: ${step.name}`,
-        stepProgress,
-        'loading'
-      )
+      createProgressField(`workflow:step:${step.name}`, userMessage, stepStart, iconHint)
     );
 
-    await executeWorkflowStep(step, ctx, execCtx, agentWorkflow);
+    // Create execution context with progress range for this step
+    const stepExecCtx: StepExecutionContext = {
+      writable,
+      manifestInfo,
+      params,
+      progressRange,
+    };
+
+    await executeWorkflowStep(step, ctx, stepExecCtx, agentWorkflow);
   }
 
   // Handle output
@@ -222,13 +317,15 @@ async function executeManagerMode(
       createProgressField('workflow:synthesis', 'Synthesizing final output...', 90, 'analyze')
     );
 
+    // Synthesis uses the 90-98% range (leaving 98-100% for final completion message)
     const synthResult = await executeWorkerStep(
       writable,
       params.agentId,
       params.basePath,
       JSON.stringify(ctx.artifacts),
       params.userId,
-      'synthesis'
+      'synthesis',
+      { start: 90, end: 98 } // Progress range for synthesis step
     );
 
     output = synthResult.object;
@@ -238,10 +335,13 @@ async function executeManagerMode(
   // Write final completion
   await writeProgressStep(
     writable,
-    createProgressField('workflow:complete', 'Workflow complete!', 100, 'success')
+    createProgressField('workflow:complete', 'Your workout program is ready!', 100, 'success')
   );
 
-  await writeFinishStep(writable, output);
+  // Emit lightweight finish signal
+  // NOTE: We don't pass the full output here to avoid WDK step serialization overhead
+  // The actual output is returned via AgentWorkflowResult
+  await writeFinishStep(writable, { completed: true });
   await closeStreamStep(writable);
 
   console.log(`[AgentWorkflow] Manager workflow completed successfully`);

@@ -175,7 +175,7 @@ export const AGENT_CONFIG_PRESETS = {
    * - Extended durability with more retries
    */
   generator: createAgentConfig({
-    tier: 'reasoning',
+    tier: 'quality',
     maxSteps: 30,
     maxTokens: 16384,
     timeout: AGENT_TIMEOUT_PRESETS.extended,

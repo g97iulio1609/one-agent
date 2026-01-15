@@ -65,6 +65,28 @@ export interface OrchestrationContext {
 }
 
 /**
+ * Progress range for mapping worker progress to global workflow progress.
+ * Each workflow step gets a "slice" of the total 0-100% range.
+ *
+ * Example with 5 steps (using 10-90% range, reserving 0-10% for init, 90-100% for completion):
+ * - Step 1: { start: 10, end: 26 }
+ * - Step 2: { start: 26, end: 42 }
+ * - Step 3: { start: 42, end: 58 }
+ * - Step 4: { start: 58, end: 74 }
+ * - Step 5: { start: 74, end: 90 }
+ *
+ * When a worker emits 50% progress, it maps to: start + (50/100) * (end - start)
+ *
+ * @since v5.2
+ */
+export interface ProgressRange {
+  /** Start of this step's progress range (0-100) */
+  start: number;
+  /** End of this step's progress range (0-100) */
+  end: number;
+}
+
+/**
  * Common context passed to step executors.
  * Follows Interface Segregation Principle - only what's needed.
  */
@@ -73,6 +95,8 @@ export interface StepExecutionContext {
   /** Serializable manifest info (not full manifest with Zod schemas) */
   manifestInfo: SerializableManifestInfo;
   params: AgentWorkflowParams;
+  /** Progress range for this step (optional, defaults to 0-100) */
+  progressRange?: ProgressRange;
 }
 
 /**

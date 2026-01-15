@@ -6,6 +6,7 @@
  *
  * @since v4.1
  * @since v4.2 - Uses manifestInfo instead of parentManifest for WDK serialization
+ * @since v5.2 - Passes progressRange to workers for global progress mapping
  */
 
 import type { CallStep } from '../../types';
@@ -23,9 +24,14 @@ export async function executeCallStep(
   // Forward reference to main workflow function (avoids circular dep)
   agentWorkflow: Parameters<typeof executeNestedManagerStep>[6]
 ): Promise<void> {
-  const { writable, manifestInfo, params } = execCtx;
+  const { writable, manifestInfo, params, progressRange } = execCtx;
 
   console.log(`[Orchestration] Calling sub-agent: ${step.agentId}`);
+  if (progressRange) {
+    console.log(
+      `[Orchestration] Progress range for ${step.agentId}: ${progressRange.start}% - ${progressRange.end}%`
+    );
+  }
 
   // Resolve input from templates
   const resolvedInput = resolveInputMap(step.inputMap, ctx);
@@ -53,7 +59,7 @@ export async function executeCallStep(
         agentWorkflow
       );
     } else {
-      // Worker - execute directly
+      // Worker - execute directly with progress range
       console.log(`[Orchestration] Sub-agent ${step.agentId} is a Worker, executing directly`);
       const workerResult = await executeWorkerStep(
         writable,
@@ -61,7 +67,8 @@ export async function executeCallStep(
         manifestInfo.path,
         inputJson,
         params.userId,
-        step.agentId // stepPrefix for progress
+        step.agentId, // stepPrefix for progress
+        progressRange // Pass progress range for global mapping
       );
       result = workerResult.object;
     }
