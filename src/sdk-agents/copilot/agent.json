@@ -4,8 +4,8 @@
   "type": "agent",
   "description": "OneCoach AI Copilot - orchestrates domain-specific agents for chat",
   "interface": {
-    "input": { "$ref": "copilot:input" },
-    "output": { "$ref": "copilot:output" }
+    "input": { "$ref": "./schema.ts#CopilotInputSchema" },
+    "output": { "$ref": "./schema.ts#CopilotOutputSchema" }
   },
   "mcpServers": {},
   "config": {
