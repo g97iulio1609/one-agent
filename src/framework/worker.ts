@@ -1,5 +1,5 @@
 /**
- * OneAgent SDK v3.0 - Worker Execution
+ * OneAgent SDK v4.2 - Worker Execution
  *
  * Executes an agent as a Worker using AI SDK v6 ToolLoopAgent.
  * Workers process input using LLM + MCP tools and return structured output.
@@ -20,9 +20,12 @@ import {
   buildProviderOptions,
   type ProviderName,
 } from '@onecoach/lib-ai';
+import { resolveProviderFromModelId } from '@onecoach/types-ai';
 import type { AgentManifest, Context, ExecutionResult, ExecutionMode } from './types';
+import { OAUTH_PROVIDERS } from './types';
 import { connectToMCPServers, mcpToolsToAiSdk } from './mcp';
-import { loadSkills } from './loader';
+import { loadAgentSkills } from './loader';
+import { estimateTokens, getNestedValue } from './agent-workflow/helpers';
 
 // ==================== TYPES ====================
 
@@ -77,8 +80,9 @@ export async function executeWorker<TOutput = unknown>(
     console.log('[Worker] Using model:', modelConfig.model, 'provider:', modelConfig.provider);
 
     // OAuth-based providers (gemini-cli) don't require API key
-    const OAUTH_PROVIDERS = ['gemini-cli'];
-    const isOAuthProvider = OAUTH_PROVIDERS.includes(modelConfig.provider);
+    const isOAuthProvider = OAUTH_PROVIDERS.includes(
+      modelConfig.provider as (typeof OAUTH_PROVIDERS)[number]
+    );
 
     const apiKey = await AIProviderConfigService.getApiKey(modelConfig.provider as ProviderName);
 
@@ -182,10 +186,15 @@ export async function executeWorker<TOutput = unknown>(
       // This is the correct pattern for structured output streaming
       let lastPartial: Partial<TOutput> | null = null;
       let stepCount = 0;
+      let aiProgressCount = 0;
 
       for await (const partial of partialOutputStream) {
         lastPartial = partial as Partial<TOutput>;
         stepCount++;
+
+        if (partial && typeof partial === 'object' && '_progress' in partial) {
+          aiProgressCount++;
+        }
 
         // Update context with step progress
         context.meta.updatedAt = new Date();
@@ -195,6 +204,11 @@ export async function executeWorker<TOutput = unknown>(
         if (stepCount % 5 === 0) {
           console.log(`[Worker] Stream progress: step ${stepCount}`);
         }
+      }
+
+      const requiresAiProgress = manifest.progress?.aiDriven ?? true;
+      if (requiresAiProgress && aiProgressCount === 0) {
+        throw new Error(`[Worker] ${manifest.id} did not emit required _progress updates`);
       }
 
       console.log('[Worker] partialOutputStream complete, steps:', stepCount);
@@ -277,7 +291,7 @@ async function getModelForAgent(
 
   // If agent.json specifies an explicit model (not 'auto'), use it
   if (config.model && config.model !== 'auto') {
-    const provider = config.provider || detectProviderFromModel(config.model);
+    const provider = config.provider || resolveProviderFromModelId(config.model);
     console.log(`[Worker] Using explicit model from agent.json: ${config.model}`);
     return {
       model: config.model,
@@ -291,17 +305,6 @@ async function getModelForAgent(
   const tier = config.tier || 'balanced';
   console.log(`[Worker] Using tier system: ${tier}`);
   return await getModelByTier(tier);
-}
-
-/**
- * Detect provider from model name
- */
-function detectProviderFromModel(model: string): string {
-  if (model.includes('claude')) return 'anthropic';
-  if (model.includes('gpt')) return 'openai';
-  if (model.includes('gemini')) return 'google';
-  if (model.includes('/')) return 'openrouter'; // openrouter format: provider/model
-  return 'openrouter'; // Default fallback
 }
 
 /**
@@ -325,19 +328,9 @@ export async function buildSystemPrompt(manifest: AgentManifest, input?: unknown
     console.log(`[Worker] Base system prompt loaded: ${basePrompt.length} chars`);
   }
 
-  // Load and append skills from skills/ directory (own skills first)
-  let skills = await loadSkills(manifest.path);
-  let skillNames = Object.keys(skills);
-
-  // If no skills found and this is a worker, try parent agent's skills
-  if (skillNames.length === 0 && manifest.path.includes('/workers/')) {
-    const parentAgentPath = manifest.path.split('/workers/')[0];
-    if (parentAgentPath) {
-      console.log(`[Worker] Checking parent agent for skills: ${parentAgentPath}/skills`);
-      skills = await loadSkills(parentAgentPath);
-      skillNames = Object.keys(skills);
-    }
-  }
+  // Load and append skills (own + exposed child skills for managers)
+  const skills = await loadAgentSkills(manifest);
+  const skillNames = Object.keys(skills);
 
   if (skillNames.length > 0) {
     console.log(`[Worker] Skills loaded: ${skillNames.join(', ')}`);
@@ -346,7 +339,7 @@ export async function buildSystemPrompt(manifest: AgentManifest, input?: unknown
       console.log(`[Worker] Skill "${skillName}": ${skillContent.length} chars`);
     }
   } else {
-    console.log(`[Worker] No skills found in ${manifest.path}/skills`);
+    console.log(`[Worker] No skills found for ${manifest.id}`);
   }
 
   return parts.join('\n');
@@ -369,22 +362,6 @@ function injectPromptVariables(template: string, context: Record<string, unknown
     }
     return String(value);
   });
-}
-
-/**
- * Get nested value from object using dot notation
- */
-function getNestedValue(obj: unknown, path: string): unknown {
-  const parts = path.split('.');
-  let current: unknown = obj;
-
-  for (const part of parts) {
-    if (current === null || current === undefined) return undefined;
-    if (typeof current !== 'object') return undefined;
-    current = (current as Record<string, unknown>)[part];
-  }
-
-  return current;
 }
 
 /**
@@ -436,17 +413,6 @@ function buildUserPrompt(input: unknown, manifest: AgentManifest): string {
   }
 
   return `Process the following input and generate a ${manifest.id} output:\n\n${JSON.stringify(input, null, 2)}`;
-}
-
-/**
- * Estimate token usage based on content
- */
-function estimateTokens(systemPrompt: string, userPrompt: string, output: unknown): number {
-  const inputChars = systemPrompt.length + userPrompt.length;
-  const outputChars = JSON.stringify(output).length;
-
-  // Rough estimate: 4 chars per token
-  return Math.ceil((inputChars + outputChars) / 4);
 }
 
 /**

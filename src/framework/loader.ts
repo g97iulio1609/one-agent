@@ -1,5 +1,5 @@
 /**
- * OneAgent SDK v3.0 - Agent Loader
+ * OneAgent SDK v4.2 - Agent Loader
  *
  * Loads agent manifest from:
  * - agent.json (interface, MCP config)
@@ -10,18 +10,10 @@
 
 import { readFile } from 'fs/promises';
 import { existsSync } from 'fs';
-import { join, resolve } from 'path';
-import type { AgentManifest, AgentJsonConfig, AgentConfig } from './types';
+import { join, resolve, sep, dirname } from 'path';
+import type { AgentManifest, AgentJsonConfig, AgentSkillsConfig, WorkflowStep } from './types';
+import { DEFAULT_AGENT_CONFIG } from './types';
 import { parseWorkflow, hasWorkflow } from './parser';
-
-const DEFAULT_CONFIG: AgentConfig = {
-  tier: 'balanced', // Use tier system instead of hardcoded model
-  temperature: 0.7,
-  maxSteps: 5,
-  maxTokens: 4096,
-  timeout: 60000,
-  executionMode: 'stream',
-};
 
 /**
  * Find the monorepo root by looking for marker files.
@@ -122,11 +114,7 @@ export async function loadAgentManifest(
 
   // 1. Load agent.json (required)
   const agentJsonPath = join(fullPath, 'agent.json');
-  if (!existsSync(agentJsonPath)) {
-    throw new Error(`[Loader] agent.json not found at: ${agentJsonPath}`);
-  }
-  const agentJsonContent = await readFile(agentJsonPath, 'utf-8');
-  const agentJson: AgentJsonConfig = JSON.parse(agentJsonContent);
+  const agentJson = await loadAgentJsonConfig(agentJsonPath);
 
   // 2. Load AGENTS.md (required)
   const agentsMdPath = join(fullPath, 'AGENTS.md');
@@ -164,8 +152,11 @@ export async function loadAgentManifest(
     systemPrompt,
     workflow,
     mcpServers: agentJson.mcpServers,
+    skills: agentJson.skills,
+    tools: agentJson.tools,
+    progress: agentJson.progress,
     config: {
-      ...DEFAULT_CONFIG,
+      ...DEFAULT_AGENT_CONFIG,
       ...agentJson.config,
     },
   };
@@ -274,13 +265,37 @@ async function loadSchemaRef(
 }
 
 /**
- * Load skill files from skills/ directory
+ * Load agent.json config from path
  */
-export async function loadSkills(agentPath: string): Promise<Record<string, string>> {
-  const skillsPath = join(agentPath, 'skills');
+export async function loadAgentJsonConfig(agentJsonPath: string): Promise<AgentJsonConfig> {
+  if (!existsSync(agentJsonPath)) {
+    throw new Error(`[Loader] agent.json not found at: ${agentJsonPath}`);
+  }
+
+  const agentJsonContent = await readFile(agentJsonPath, 'utf-8');
+  return JSON.parse(agentJsonContent) as AgentJsonConfig;
+}
+
+/**
+ * Resolve skills directory path from config (default: "skills")
+ */
+function resolveSkillsPath(agentPath: string, skillsConfig?: AgentSkillsConfig): string | null {
+  const relativePath = skillsConfig?.path ?? 'skills';
+  const skillsPath = join(agentPath, relativePath);
+  return existsSync(skillsPath) ? skillsPath : null;
+}
+
+/**
+ * Load skill files from a skills directory
+ */
+export async function loadSkills(
+  agentPath: string,
+  skillsConfig?: AgentSkillsConfig
+): Promise<Record<string, string>> {
+  const skillsPath = resolveSkillsPath(agentPath, skillsConfig);
   const skills: Record<string, string> = {};
 
-  if (!existsSync(skillsPath)) {
+  if (!skillsPath) {
     return skills;
   }
 
@@ -296,6 +311,90 @@ export async function loadSkills(agentPath: string): Promise<Record<string, stri
   }
 
   return skills;
+}
+
+/**
+ * Load skills for an agent, including exposed child skills for managers.
+ */
+export async function loadAgentSkills(manifest: AgentManifest): Promise<Record<string, string>> {
+  const ownSkills = await loadSkills(manifest.path, manifest.skills);
+
+  if (!manifest.workflow) {
+    return ownSkills;
+  }
+
+  const childSkills = await loadExposedChildSkills(manifest);
+  return { ...ownSkills, ...childSkills };
+}
+
+async function loadExposedChildSkills(manifest: AgentManifest): Promise<Record<string, string>> {
+  const steps = manifest.workflow?.steps ?? [];
+  const childAgentIds = collectCallAgentIds(steps);
+  const merged: Record<string, string> = {};
+
+  for (const agentId of childAgentIds) {
+    try {
+      const childAgentPath = resolveChildAgentPath(manifest, agentId);
+      const childConfig = await loadAgentJsonConfig(join(childAgentPath, 'agent.json'));
+
+      if (!childConfig.skills?.expose) {
+        continue;
+      }
+
+      const childSkills = await loadSkills(childAgentPath, childConfig.skills);
+      for (const [skillName, content] of Object.entries(childSkills)) {
+        const namespaced = `${childConfig.id}:${skillName}`;
+        merged[namespaced] = content;
+      }
+    } catch (error) {
+      console.warn(`[Loader] Failed to load child skills for ${agentId}:`, error);
+    }
+  }
+
+  return merged;
+}
+
+function collectCallAgentIds(steps: WorkflowStep[]): string[] {
+  const ids = new Set<string>();
+
+  const visit = (step: WorkflowStep): void => {
+    switch (step.type) {
+      case 'call':
+        ids.add(step.agentId);
+        break;
+      case 'parallel':
+        step.branches.flat().forEach(visit);
+        break;
+      case 'loop':
+        step.steps.forEach(visit);
+        break;
+      case 'conditional':
+        step.then.forEach(visit);
+        step.else?.forEach(visit);
+        break;
+      case 'transform':
+        break;
+    }
+  };
+
+  steps.forEach(visit);
+  return Array.from(ids);
+}
+
+function resolveChildAgentPath(parentManifest: AgentManifest, agentId: string): string {
+  if (agentId.startsWith('workers/')) {
+    return join(parentManifest.path, agentId);
+  }
+
+  if (agentId.startsWith('sdk-agents/')) {
+    const marker = `${sep}sdk-agents${sep}`;
+    const markerIndex = parentManifest.path.lastIndexOf(marker);
+    const basePath =
+      markerIndex >= 0 ? parentManifest.path.slice(0, markerIndex) : dirname(parentManifest.path);
+    return normalizeBundledPath(basePath, agentId);
+  }
+
+  return join(parentManifest.path, agentId);
 }
 
 /**

@@ -1,5 +1,5 @@
 /**
- * OneAgent SDK v3.0 - Prisma Persistence Adapter
+ * OneAgent SDK v4.2 - Prisma Persistence Adapter
  *
  * Implements PersistenceAdapter interface for storing:
  * - Execution contexts (for resume/recovery)

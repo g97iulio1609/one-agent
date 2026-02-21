@@ -1,5 +1,5 @@
 /**
- * Copilot SDK 3.1 Input/Output Schemas
+ * Copilot SDK 4.2 Input/Output Schemas
  */
 import { z } from 'zod';
 import { registerSchemas } from '@onecoach/one-agent/framework';

@@ -1,5 +1,5 @@
 /**
- * OneAgent SDK 2.5 - Core Types
+ * OneAgent SDK 4.2 - Core Types
  *
  * Following SOLID principles with clear interfaces
  */

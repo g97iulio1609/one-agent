@@ -1,5 +1,5 @@
 /**
- * OneAgent SDK v3.0 - Workflow Executor
+ * OneAgent SDK v4.2 - Workflow Executor
  *
  * Executes workflow definitions for Manager agents.
  * Handles sequential, parallel, loop, and conditional steps.

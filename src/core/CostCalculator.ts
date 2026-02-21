@@ -1,5 +1,5 @@
 /**
- * OneAgent SDK 2.5 - Cost Calculator
+ * OneAgent SDK 4.2 - Cost Calculator
  *
  * Calculates AI model costs based on token usage
  * Following Single Responsibility Principle

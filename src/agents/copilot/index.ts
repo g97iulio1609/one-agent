@@ -1,7 +1,7 @@
 /**
  * Copilot Agent - Exports
  *
- * Unified copilot agent for OneAgent SDK 2.5
+ * Unified copilot agent for OneAgent SDK 4.2
  */
 
 export {

@@ -1,5 +1,5 @@
 /**
- * OneAgent SDK v3.1 - Resilience Utilities
+ * OneAgent SDK v4.2 - Resilience Utilities
  *
  * Provides retry logic with exponential backoff for LLM calls
  */

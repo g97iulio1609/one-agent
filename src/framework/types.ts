@@ -1,5 +1,5 @@
 /**
- * OneAgent SDK v4.1 - Core Types
+ * OneAgent SDK v4.2 - Core Types
  *
  * Fractal Architecture: Manager/Worker based on WORKFLOW.md presence
  * MCP Integration for tools
@@ -8,6 +8,7 @@
  *
  * @since v4.0 - Added 'durable' execution mode
  * @since v4.1 - Added ProgressFieldSchema for AI-driven progress updates
+ * @since v4.2 - Added AgentSkillsConfig, AgentToolsConfig, AgentProgressConfig, step weights
  */
 
 import { z } from 'zod';
@@ -191,7 +192,7 @@ export const PROGRESS_PROMPT_INSTRUCTIONS = `
 ## Real-Time Progress Updates
 
 You MUST emit progress updates by including the "_progress" field in your output BEFORE each major action.
-This provides real-time feedback to users during execution.
+This is REQUIRED for all worker agents and provides real-time feedback to users during execution.
 
 ### Progress Field Structure:
 - step: Internal identifier (e.g., "init", "tool:searchFlights", "analysis")
@@ -219,6 +220,46 @@ This provides real-time feedback to users during execution.
 `;
 
 // ==================== AGENT MANIFEST ====================
+
+/**
+ * Agent Skills configuration (agent.json)
+ */
+export interface AgentSkillsConfig {
+  /** Relative path to skills directory (default: "skills") */
+  path?: string;
+  /** Whether parent agents can see these skills (default: false) */
+  expose?: boolean;
+}
+
+/**
+ * Agent Tools configuration (agent.json)
+ */
+export interface AgentToolsConfig {
+  /** Relative path to tools directory (default: "tools") */
+  path?: string;
+  /** Whether parent agents can see these tools (default: false) */
+  expose?: boolean;
+}
+
+/**
+ * Optional progress step definition for fallback progress
+ */
+export interface AgentProgressStep {
+  name: string;
+  weight: number;
+}
+
+/**
+ * Agent progress configuration (agent.json)
+ */
+export interface AgentProgressConfig {
+  /** Weight used for workflow progress distribution (default: 1) */
+  weight?: number;
+  /** Whether AI-driven _progress is required (default: true) */
+  aiDriven?: boolean;
+  /** Optional fallback steps if AI progress is unavailable */
+  fallbackSteps?: AgentProgressStep[];
+}
 
 /**
  * Agent Manifest - loaded from agent.json + AGENTS.md + schema.ts
@@ -251,6 +292,15 @@ export interface AgentManifest {
   /** MCP server configurations */
   mcpServers?: Record<string, MCPServerConfig>;
 
+  /** Agent skills configuration */
+  skills?: AgentSkillsConfig;
+
+  /** Agent tools configuration */
+  tools?: AgentToolsConfig;
+
+  /** Agent progress configuration */
+  progress?: AgentProgressConfig;
+
   /** Agent config */
   config: AgentConfig;
 }
@@ -267,6 +317,9 @@ export interface AgentJsonConfig {
     output: { $ref: string };
   };
   mcpServers?: Record<string, MCPServerConfig>;
+  skills?: AgentSkillsConfig;
+  tools?: AgentToolsConfig;
+  progress?: AgentProgressConfig;
   config?: Partial<AgentConfig>;
 }
 
@@ -415,6 +468,16 @@ export const DEFAULT_DURABILITY_CONFIG: DurabilityConfig = {
   checkpointStrategy: 'step',
 };
 
+// ==================== OAUTH PROVIDERS ====================
+
+/**
+ * Providers that use OAuth instead of API keys.
+ * These don't require explicit API key configuration.
+ * @since v4.2
+ */
+export const OAUTH_PROVIDERS = ['gemini-cli'] as const;
+export type OAuthProvider = (typeof OAUTH_PROVIDERS)[number];
+
 // ==================== WORKFLOW DEFINITION ====================
 
 /**
@@ -470,6 +533,8 @@ export interface CallStep {
   /** Input map with type-preserving values */
   inputMap: Record<string, InputValue>;
   storeKey: string;
+  /** Optional weight for structural progress distribution */
+  weight?: number;
   /** Optional retry configuration */
   retry?: RetryConfig;
 }
@@ -481,6 +546,8 @@ export interface ParallelStep {
   type: 'parallel';
   name: string;
   branches: WorkflowStep[][];
+  /** Optional weight for structural progress distribution */
+  weight?: number;
 }
 
 /**
@@ -495,6 +562,8 @@ export interface LoopStep {
   mode: 'parallel' | 'sequential';
   steps: WorkflowStep[];
   outputKey: string;
+  /** Optional weight for structural progress distribution */
+  weight?: number;
 }
 
 /**
@@ -506,6 +575,8 @@ export interface ConditionalStep {
   condition: string;
   then: WorkflowStep[];
   else?: WorkflowStep[];
+  /** Optional weight for structural progress distribution */
+  weight?: number;
 }
 
 /**
@@ -535,6 +606,8 @@ export interface TransformStep {
   inputMap: Record<string, InputValue>;
   /** Key to store the result in artifacts */
   storeKey: string;
+  /** Optional weight for structural progress distribution */
+  weight?: number;
 }
 
 /**

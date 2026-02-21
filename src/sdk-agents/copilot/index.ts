@@ -1,5 +1,5 @@
 /**
- * Copilot SDK 3.1 Agent Entry Point
+ * Copilot SDK 4.2 Agent Entry Point
  *
  * Provides both structured execution and streaming for chat UI.
  */
@@ -33,7 +33,7 @@ export interface CopilotStreamOptions {
 }
 
 /**
- * Execute Copilot agent using SDK 3.1 (structured output)
+ * Execute Copilot agent using SDK 4.2 (structured output)
  */
 export async function executeCopilot(
   input: CopilotInput,
@@ -212,10 +212,10 @@ function buildDelegationTools(
   userProfile?: Record<string, unknown>
 ) {
   return {
-    // Delegation tools call SDK 3.1 agents
+    // Delegation tools call SDK 4.2 agents
     delegateToNutrition: tool({
       description:
-        'Generate comprehensive nutrition plans or analyze dietary requirements using SDK 3.1.',
+        'Generate comprehensive nutrition plans or analyze dietary requirements using SDK 4.2.',
       inputSchema: z.object({
         goal: z
           .enum(['weight_loss', 'muscle_gain', 'maintenance', 'performance'])
@@ -286,7 +286,7 @@ function buildDelegationTools(
     }),
 
     delegateToWorkout: tool({
-      description: 'Generate personalized workout programs using SDK 3.1 agents.',
+      description: 'Generate personalized workout programs using SDK 4.2 agents.',
       inputSchema: z.object({
         primaryGoal: z.enum(['strength', 'hypertrophy', 'endurance', 'power', 'general_fitness']),
         daysPerWeek: z.number().min(2).max(7).describe('Training days per week'),
@@ -384,7 +384,7 @@ function buildDelegationTools(
     }),
 
     delegateToOneAgenda: tool({
-      description: 'Generate daily agenda and schedule tasks using SDK 3.1.',
+      description: 'Generate daily agenda and schedule tasks using SDK 4.2.',
       inputSchema: z.object({
         date: z.string().describe('YYYY-MM-DD'),
         tasks: z.array(

@@ -1,5 +1,5 @@
 /**
- * OneAgent SDK 2.5 - Base Agent
+ * OneAgent SDK 4.2 - Base Agent
  *
  * Abstract base class following SOLID principles
  * - Single Responsibility: Handles agent execution flow

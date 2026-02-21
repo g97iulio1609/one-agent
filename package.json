@@ -1,8 +1,8 @@
 {
   "name": "@onecoach/one-agent",
-  "version": "4.1.0-alpha.0",
+  "version": "4.2.0-alpha.0",
   "type": "module",
-  "description": "OneAgent SDK 4.1 - AI agent framework with durable streaming and real-time progress",
+  "description": "OneAgent SDK 4.2 - AI agent framework with durable streaming, skill visibility, and weighted progress",
   "main": "src/index.ts",
   "types": "src/index.ts",
   "exports": {
@@ -55,8 +55,8 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "3.0.2",
-    "@ai-sdk/openai": "3.0.2",
+    "@ai-sdk/anthropic": "3.0.39",
+    "@ai-sdk/openai": "3.0.26",
     "@modelcontextprotocol/sdk": "^1.11.0",
     "@onecoach/constants": "workspace:*",
     "@onecoach/lib-ai": "workspace:*",
@@ -67,9 +67,9 @@
     "@prisma/client": "^7.2.0",
     "@workflow/core": "4.0.1-beta.36",
     "@workflow/ai": "4.0.1-beta.44",
-    "ai": "6.0.19",
+    "ai": "6.0.77",
     "yaml": "^2.8.2",
-    "zod": "4.3.5",
+    "zod": "4.3.6",
     "@onecoach/types": "workspace:*",
     "@onecoach/types-core": "workspace:*",
     "@onecoach/types-workout": "workspace:*",

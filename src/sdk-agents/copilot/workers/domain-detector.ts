@@ -1,7 +1,7 @@
 /**
  * Domain Detector Worker
  * 
- * SDK 3.1 worker that detects the domain from a user query.
+ * SDK 4.2 worker that detects the domain from a user query.
  */
 import { z } from 'zod';
 

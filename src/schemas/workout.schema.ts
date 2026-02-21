@@ -1,5 +1,5 @@
 /**
- * OneAgent SDK 2.5 - Workout Schemas
+ * OneAgent SDK 4.2 - Workout Schemas
  *
  * Re-export da @onecoach/schemas per compatibilità.
  * SSOT è in packages/schemas/src/workout/index.ts

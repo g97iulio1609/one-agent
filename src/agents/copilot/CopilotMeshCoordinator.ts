@@ -1,7 +1,7 @@
 /**
  * Copilot Mesh Coordinator
  *
- * Unified copilot agent integrated natively into OneAgent SDK 2.5 Mesh architecture.
+ * Unified copilot agent integrated natively into OneAgent SDK 4.2 Mesh architecture.
  * Acts as a peer agent alongside Nutrition, Workout, Analytics, and OneAgenda agents.
  *
  * Features:

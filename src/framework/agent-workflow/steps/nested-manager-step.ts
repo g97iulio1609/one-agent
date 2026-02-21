@@ -94,4 +94,4 @@ export async function executeNestedManagerStep(
 }
 
 // Child workflow has its own retry logic
-(executeNestedManagerStep as unknown as { maxRetries: number }).maxRetries = 1;
+Object.defineProperty(executeNestedManagerStep, 'maxRetries', { value: 1, writable: false });

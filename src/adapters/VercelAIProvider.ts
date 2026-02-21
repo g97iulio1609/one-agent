@@ -1,5 +1,5 @@
 /**
- * OneAgent SDK 2.5 - Vercel AI Provider
+ * OneAgent SDK 4.2 - Vercel AI Provider
  *
  * Native adapter for Vercel AI SDK
  * Following Dependency Inversion Principle
@@ -48,20 +48,14 @@ export class VercelAIProvider implements IAIProvider {
   }): Promise<{ output: T; usage: { totalTokens: number } }> {
     const modelProvider = this.getModelProvider(params.model);
 
-    const messages: Array<{ role: 'system' | 'user'; content: string }> = [];
-    if (params.systemPrompt) {
-      messages.push({ role: 'system', content: params.systemPrompt });
-    }
-    messages.push({ role: 'user', content: params.prompt });
-
     const result = await generateText({
       model: modelProvider,
       output: Output.object({ schema: params.schema }),
-      messages: messages as any,
+      system: params.systemPrompt,
+      prompt: params.prompt,
       abortSignal: params.abortSignal,
-      // temperature removed as per request
       // Note: maxTokens not supported in AI SDK 6 beta
-    } as any);
+    });
 
     return {
       output: result.output as T,
@@ -150,32 +144,29 @@ export class VercelAIProvider implements IAIProvider {
   } {
     const modelProvider = this.getModelProvider(params.model);
 
-    const messages: Array<{ role: 'system' | 'user'; content: string }> = [];
-    if (params.systemPrompt) {
-      messages.push({ role: 'system', content: params.systemPrompt });
-    }
-    messages.push({ role: 'user', content: params.prompt });
-
     const result = streamText({
       model: modelProvider,
       output: Output.object({ schema: params.schema }),
-      messages: messages as any,
+      system: params.systemPrompt,
+      prompt: params.prompt,
       abortSignal: params.abortSignal,
       onError({ error }: { error: unknown }) {
         params.onError?.(error);
       },
-      // temperature removed as per request
       // Note: maxTokens not supported in AI SDK 6 beta
-    } as any);
+    });
 
-    void result.usage.then((usage: unknown) => {
-      params.onLog?.('VercelAIProvider usage', usage as Record<string, unknown>);
+    const usage: Promise<{ totalTokens: number; costUSD?: number }> = Promise.resolve(
+      result.usage
+    ).then((u) => {
+      params.onLog?.('VercelAIProvider usage', u as Record<string, unknown>);
+      return { totalTokens: u.totalTokens ?? 0 };
     });
 
     return {
-      partialOutputStream: result.partialOutputStream as unknown as AsyncIterable<Partial<T>>,
-      output: result.output as unknown as Promise<T>,
-      usage: result.usage as unknown as Promise<{ totalTokens: number; costUSD?: number }>,
+      partialOutputStream: result.partialOutputStream as AsyncIterable<Partial<T>>,
+      output: Promise.resolve(result.output) as Promise<T>,
+      usage,
     };
   }
 }

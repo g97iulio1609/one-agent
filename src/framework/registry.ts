@@ -1,5 +1,5 @@
 /**
- * OneAgent SDK v3.0 - Schema & Tools Registry
+ * OneAgent SDK v4.2 - Schema & Tools Registry
  *
  * Provides static registration for bundled environments
  * where dynamic import() doesn't work (Turbopack, Webpack, etc.)

@@ -1,6 +1,6 @@
 {
   "id": "copilot",
-  "version": "2.0.0",
+  "version": "4.2.0-alpha.0",
   "type": "agent",
   "description": "OneCoach AI Copilot - orchestrates domain-specific agents for chat",
   "interface": {

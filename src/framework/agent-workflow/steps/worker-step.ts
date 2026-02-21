@@ -16,6 +16,7 @@ import { ToolLoopAgent, stepCountIs, Output } from 'ai';
 import { FatalError, RetryableError, getStepMetadata } from 'workflow';
 import type { UIMessageChunk } from 'ai';
 import type { ProgressRange } from '../types';
+import { OAUTH_PROVIDERS } from '../../types';
 import {
   normalizeAgentPath,
   estimateTokens,
@@ -231,8 +232,9 @@ export async function executeWorkerStep(
     );
 
     // Get API key
-    const OAUTH_PROVIDERS = ['gemini-cli'];
-    const isOAuthProvider = OAUTH_PROVIDERS.includes(modelConfig.provider);
+    const isOAuthProvider = OAUTH_PROVIDERS.includes(
+      modelConfig.provider as (typeof OAUTH_PROVIDERS)[number]
+    );
     const apiKey = await AIProviderConfigService.getApiKey(
       modelConfig.provider as import('@onecoach/lib-ai').ProviderName
     );
@@ -397,4 +399,4 @@ export async function executeWorkerStep(
 }
 
 // WDK retry config
-(executeWorkerStep as unknown as { maxRetries: number }).maxRetries = 3;
+Object.defineProperty(executeWorkerStep, 'maxRetries', { value: 3, writable: false });

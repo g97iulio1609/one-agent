@@ -1,5 +1,5 @@
 /**
- * OneAgent SDK v3.0 - Template Resolver
+ * OneAgent SDK v4.2 - Template Resolver
  *
  * Resolves template strings like "${context.artifacts.profile}"
  * into actual values from the context.

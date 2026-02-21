@@ -1,11 +1,11 @@
 /**
- * OneAgent SDK v4.0 - Execution Engine
+ * OneAgent SDK v4.2 - Execution Engine
  *
  * The recursive core of the fractal architecture.
  * Determines if an agent is a Manager (has WORKFLOW.md) or Worker,
  * and orchestrates execution accordingly.
  *
- * v4.0 additions:
+ * v4.2 additions:
  * - Durable execution mode via WDK DurableAgent
  * - Resume from workflowRunId
  */

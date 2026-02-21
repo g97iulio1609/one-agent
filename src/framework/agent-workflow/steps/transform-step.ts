@@ -36,4 +36,4 @@ export async function executeTransformStep(
 }
 
 // Transforms are deterministic, no retry needed
-(executeTransformStep as unknown as { maxRetries: number }).maxRetries = 0;
+Object.defineProperty(executeTransformStep, 'maxRetries', { value: 0, writable: false });

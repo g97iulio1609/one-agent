@@ -1,7 +1,7 @@
 /**
  * Agent Registry
  *
- * Unified registry for all OneAgent SDK 2.5 agents with native capability discovery.
+ * Unified registry for all OneAgent SDK 4.2 agents with native capability discovery.
  * Eliminates adapter layers and provides direct access to mesh-native agents.
  *
  * Principles: KISS, SOLID, DRY

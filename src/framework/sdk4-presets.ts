@@ -1,10 +1,10 @@
 /**
- * OneAgent SDK v4.0 - Configuration Presets
+ * OneAgent SDK v4.2 - Configuration Presets
  *
  * DRY configuration presets for common agent patterns.
  * Use these to avoid repetition and ensure consistency across agents.
  *
- * @since v4.0
+ * @since v4.2
  */
 
 import type { AgentConfig, DurabilityConfig, ModelTier } from './types';

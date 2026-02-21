@@ -1,9 +1,10 @@
 /**
- * OneAgent SDK v4.1 - Public API
+ * OneAgent SDK v4.2 - Public API
  *
  * Fractal Agent Architecture with MCP Integration
  * v4.0: Added DurableAgent support via WDK
  * v4.1: Added streaming progress via getWritable() and AI-driven updates
+ * v4.2: Added skill visibility, weighted progress, and abstracted workout patterns
  *
  * @example
  * import { execute, createMesh } from './framework';
@@ -40,7 +41,14 @@ export { initializeWDKWorld, isWDKWorldAvailable, getWDKWorldStatus } from './wd
 export { executeWorkflow } from './workflow';
 
 // ==================== LOADER ====================
-export { loadAgentManifest, loadSkills, isManager, discoverAgents } from './loader';
+export {
+  loadAgentManifest,
+  loadSkills,
+  loadAgentJsonConfig,
+  loadAgentSkills,
+  isManager,
+  discoverAgents,
+} from './loader';
 
 // ==================== PARSER ====================
 export { parseWorkflow, hasWorkflow } from './parser';
@@ -101,6 +109,12 @@ export type {
   MCPServerConfig,
   ExecutionMode,
 
+  // Agent v4.2 (skills/tools/progress config)
+  AgentSkillsConfig,
+  AgentToolsConfig,
+  AgentProgressConfig,
+  AgentProgressStep,
+
   // Durability (v4.0)
   DurabilityConfig,
   DurableExecutionResult,
@@ -147,9 +161,11 @@ export {
   // v4.1: Progress schema and instructions
   ProgressFieldSchema,
   PROGRESS_PROMPT_INSTRUCTIONS,
+  // v4.2: OAuth providers
+  OAUTH_PROVIDERS,
 } from './types';
 
-export type { AgentTimeoutPreset } from './types';
+export type { AgentTimeoutPreset, OAuthProvider } from './types';
 
 // ==================== SDK 4.0 PRESETS ====================
 export {

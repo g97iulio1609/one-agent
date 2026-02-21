@@ -1,20 +1,21 @@
 /**
  * Agent Registry Initialization
  *
- * Registers all OneAgent SDK 2.5 agents with their capabilities
+ * Registers all OneAgent SDK 4.2 agents with their capabilities
  */
 
 import { getAgentRegistry, type RegisteredAgent, type AgentCapability } from './AgentRegistry';
 // Nutrition agent removed - generation is handled by PatternNutritionOrchestratorService in apps/next
-// Workout agent removed - generation now uses SDK 3.1 declarative workflows via @onecoach/one-workout
+// Workout agent removed - generation now uses SDK 4.2 declarative workflows via @onecoach/one-workout
 import { createCopilotMeshCoordinator } from '../agents/copilot';
+import { SDK_VERSION } from '../core/version';
 import { createAIProvider } from '@onecoach/lib-ai';
 import { createCostCalculator } from '../core/CostCalculator';
 import { AIProviderConfigService } from '@onecoach/lib-ai';
 
 export interface AgentModelConfig {
   // nutritionModel removed - nutrition generation uses PatternNutritionOrchestratorService
-  // workoutModel removed - workout generation uses SDK 3.1 via @onecoach/one-workout
+  // workoutModel removed - workout generation uses SDK 4.2 via @onecoach/one-workout
   copilotModel?: string;
 }
 
@@ -55,7 +56,7 @@ export async function initializeAgentRegistry(
 
   // Use provided models or fallback to defaults
   // nutritionModel removed - nutrition generation uses PatternNutritionOrchestratorService
-  // workoutModel removed - workout generation uses SDK 3.1 via @onecoach/one-workout
+  // workoutModel removed - workout generation uses SDK 4.2 via @onecoach/one-workout
   const copilotModel = await resolveModelFromAdmin(modelConfig?.copilotModel, 'copilot');
 
   // Register Copilot Agent
@@ -94,7 +95,7 @@ export async function initializeAgentRegistry(
     priority: 10, // Highest priority
     status: 'active',
     metadata: {
-      version: '2.5.0',
+      version: SDK_VERSION,
       createdAt: new Date(),
       totalExecutions: 0,
       successRate: 1.0,
@@ -105,7 +106,7 @@ export async function initializeAgentRegistry(
   // in apps/next/lib/services/nutrition/pattern-nutrition-orchestrator.service.ts
   // The registry is not used for nutrition plan generation
 
-  // Workout Agent REMOVED - generation now uses SDK 3.1 declarative workflows
+  // Workout Agent REMOVED - generation now uses SDK 4.2 declarative workflows
   // via @onecoach/one-workout (submodules/one-workout/src/sdk-agents/workout-generation)
   // The WorkoutMeshCoordinator is legacy and no longer used.
 }

@@ -74,4 +74,4 @@ export async function loadManifestStep(
 }
 
 // WDK retry config
-(loadManifestStep as unknown as { maxRetries: number }).maxRetries = 2;
+Object.defineProperty(loadManifestStep, 'maxRetries', { value: 2, writable: false });

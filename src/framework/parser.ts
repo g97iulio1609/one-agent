@@ -1,5 +1,5 @@
 /**
- * OneAgent SDK v3.0 - WORKFLOW.md Parser (v2)
+ * OneAgent SDK v4.2 - WORKFLOW.md Parser
  *
  * Robust parser supporting two formats:
  * 1. YAML fenced blocks (recommended, structured)
@@ -82,6 +82,7 @@ interface YamlStepDef {
   input?: Record<string, unknown>;
   store?: string;
   output?: string;
+  weight?: number;
   retry?: {
     maxAttempts?: number;
     delayMs?: number;
@@ -174,6 +175,7 @@ function buildStepFromYaml(name: string, def: YamlStepDef): WorkflowStep | null 
       agentId: normalizeAgentPath(def.call),
       inputMap,
       storeKey: def.store || `artifacts.${def.call.split('/').pop()}`,
+      weight: def.weight,
     };
     // Add retry config if specified
     if (def.retry) {
@@ -205,6 +207,7 @@ function buildStepFromYaml(name: string, def: YamlStepDef): WorkflowStep | null 
       mode: def.loop.mode || 'parallel',
       steps: nestedSteps,
       outputKey: def.output || 'artifacts.loopResult',
+      weight: def.weight,
     };
   }
 
@@ -223,6 +226,7 @@ function buildStepFromYaml(name: string, def: YamlStepDef): WorkflowStep | null 
       type: 'parallel',
       name,
       branches,
+      weight: def.weight,
     };
   }
 
@@ -248,6 +252,7 @@ function buildStepFromYaml(name: string, def: YamlStepDef): WorkflowStep | null 
       condition: def.if,
       then: thenSteps,
       else: elseSteps.length > 0 ? elseSteps : undefined,
+      weight: def.weight,
     };
   }
 
@@ -260,6 +265,7 @@ function buildStepFromYaml(name: string, def: YamlStepDef): WorkflowStep | null 
       transformId: def.transform,
       inputMap,
       storeKey: def.store || `artifacts.${def.transform}`,
+      weight: def.weight,
     };
     return transformStep;
   }

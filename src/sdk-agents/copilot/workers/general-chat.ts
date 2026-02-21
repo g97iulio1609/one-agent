@@ -1,7 +1,7 @@
 /**
  * General Chat Worker
  * 
- * SDK 3.1 worker for handling general conversation queries.
+ * SDK 4.2 worker for handling general conversation queries.
  */
 import { z } from 'zod';
 

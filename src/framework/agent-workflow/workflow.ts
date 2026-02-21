@@ -57,14 +57,15 @@ import { executeWorkflowStep } from './orchestration';
 /**
  * Icon hints for different step types
  */
-const STEP_ICONS: Record<string, 'search' | 'analyze' | 'compare' | 'loading' | 'success'> = {
-  'exercise-selector': 'search',
-  'workout-planner': 'analyze',
-  'progression-calculator': 'compare',
-  'day-generator': 'loading',
-  'progression-diff-generator': 'compare',
-  validator: 'analyze',
-  assembleWeeksFromDiffs: 'loading',
+const STEP_TYPE_ICONS: Record<
+  WorkflowStep['type'],
+  'search' | 'analyze' | 'compare' | 'loading' | 'success'
+> = {
+  call: 'loading',
+  parallel: 'loading',
+  loop: 'loading',
+  conditional: 'analyze',
+  transform: 'loading',
 };
 
 /**
@@ -78,42 +79,28 @@ function getStepUserMessage(step: WorkflowStep, stepIndex: number, totalSteps: n
     case 'call': {
       const callStep = step as CallStep;
       const agentName = callStep.agentId.split('/').pop() || callStep.agentId;
-
-      // Map agent names to user-friendly messages
-      const agentMessages: Record<string, string> = {
-        'exercise-selector': 'Selecting optimal exercises...',
-        'workout-planner': 'Planning training structure...',
-        'progression-calculator': 'Calculating progression...',
-        'day-generator': 'Generating workout days...',
-        'progression-diff-generator': 'Building week progression...',
-        validator: 'Validating program...',
-      };
-
-      return agentMessages[agentName] || `Processing ${agentName}... ${baseProgress}`;
+      return `Running ${agentName}... ${baseProgress}`;
     }
 
     case 'parallel': {
       const parallelStep = step as ParallelStep;
       const branchCount = parallelStep.branches.length;
-      return `Running ${branchCount} parallel tasks...`;
+      return `Running ${branchCount} parallel tasks... ${baseProgress}`;
     }
 
     case 'loop': {
       const loopStep = step as LoopStep;
-      return `Processing ${loopStep.itemVar} items...`;
+      return `Processing ${loopStep.itemVar} items... ${baseProgress}`;
+    }
+
+    case 'conditional': {
+      return `Evaluating condition... ${baseProgress}`;
     }
 
     case 'transform': {
       const transformStep = step as TransformStep;
-      const transformMessages: Record<string, string> = {
-        assembleWeeksFromDiffs: 'Assembling final program...',
-        'merge-exercises': 'Matching exercises with catalog...',
-      };
-      return transformMessages[transformStep.transformId] || `Applying ${transformStep.name}...`;
+      return `Applying ${transformStep.transformId}... ${baseProgress}`;
     }
-
-    default:
-      return `Step ${stepIndex + 1}/${totalSteps}: ${step.name}`;
   }
 }
 
@@ -121,14 +108,7 @@ function getStepUserMessage(step: WorkflowStep, stepIndex: number, totalSteps: n
  * Get icon hint for a step based on its type or agent ID.
  */
 function getStepIcon(step: WorkflowStep): 'search' | 'analyze' | 'compare' | 'loading' | 'success' {
-  if (step.type === 'call') {
-    const agentName = (step as CallStep).agentId.split('/').pop() || '';
-    return STEP_ICONS[agentName] || 'loading';
-  }
-  if (step.type === 'transform') {
-    return STEP_ICONS[(step as TransformStep).transformId] || 'loading';
-  }
-  return 'loading';
+  return STEP_TYPE_ICONS[step.type] ?? 'loading';
 }
 
 /**
@@ -256,25 +236,28 @@ async function executeManagerMode(
   // Write initial progress
   await writeProgressStep(
     writable,
-    createProgressField('workflow:start', 'Starting workout generation...', 5, 'loading')
+    createProgressField('workflow:start', `Starting ${params.agentId}...`, 5, 'loading')
   );
 
   // Execute workflow steps with progress range mapping
-  // Progress is distributed across 10-90% range (reserving 0-10% for init, 90-100% for completion)
-  const totalSteps = manifestInfo.workflow!.steps.length;
+  // Progress is distributed across 10-90% range based on step weight
+  const steps = manifestInfo.workflow!.steps;
   const PROGRESS_START = 10;
   const PROGRESS_END = 90;
-  const progressPerStep = (PROGRESS_END - PROGRESS_START) / totalSteps;
+  const totalWeight = steps.reduce((sum, step) => sum + Math.max(step.weight ?? 1, 1), 0);
+  let currentProgress = PROGRESS_START;
 
-  for (let i = 0; i < totalSteps; i++) {
-    const step = manifestInfo.workflow!.steps[i];
+  for (let i = 0; i < steps.length; i++) {
+    const step = steps[i]!;
 
-    // Calculate progress range for this step
-    const stepStart = Math.round(PROGRESS_START + i * progressPerStep);
-    const stepEnd = Math.round(PROGRESS_START + (i + 1) * progressPerStep);
+    const stepWeight = Math.max(step.weight ?? 1, 1);
+    const slice = ((PROGRESS_END - PROGRESS_START) * stepWeight) / totalWeight;
+    const stepStart = Math.round(currentProgress);
+    const stepEnd = i === steps.length - 1 ? PROGRESS_END : Math.round(currentProgress + slice);
     const progressRange = { start: stepStart, end: stepEnd };
+    currentProgress += slice;
 
-    const userMessage = getStepUserMessage(step, i, totalSteps);
+    const userMessage = getStepUserMessage(step, i, steps.length);
     const iconHint = getStepIcon(step);
 
     // Emit progress at start of step
@@ -335,7 +318,7 @@ async function executeManagerMode(
   // Write final completion
   await writeProgressStep(
     writable,
-    createProgressField('workflow:complete', 'Your workout program is ready!', 100, 'success')
+    createProgressField('workflow:complete', 'Workflow completed successfully!', 100, 'success')
   );
 
   // Emit lightweight finish signal

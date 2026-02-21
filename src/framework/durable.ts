@@ -1,5 +1,5 @@
 /**
- * OneAgent SDK v4.0 - Durable Execution
+ * OneAgent SDK v4.2 - Durable Execution
  *
  * Executes an agent using WDK (Workflow Development Kit) for durability.
  * Provides automatic checkpointing, resume from failure, and observability.
@@ -10,7 +10,7 @@
  * - Resume from workflowRunId on failure
  * - WDK Postgres World for self-hosted persistence
  *
- * @since v4.0
+ * @since v4.2
  */
 
 import type {

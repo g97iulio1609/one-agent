@@ -17,7 +17,7 @@
  */
 
 import { xai } from '@ai-sdk/xai';
-import { ToolLoopAgent, type Tool } from 'ai';
+import { ToolLoopAgent, type Tool, type ToolSet } from 'ai';
 import { z } from 'zod';
 import { AIModelService } from '@onecoach/lib-ai';
 
@@ -180,7 +180,7 @@ export function createChatAgent(options: CreateChatAgentOptions = {}) {
     instructions: BASE_SYSTEM_PROMPT + additionalInstructions,
 
     // Tools disponibili
-    tools: agentTools,
+    tools: agentTools as ToolSet,
 
     // Tool choice: auto per default
     toolChoice: 'auto',

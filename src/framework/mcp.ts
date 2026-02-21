@@ -1,5 +1,5 @@
 /**
- * OneAgent SDK v3.0 - MCP Integration
+ * OneAgent SDK v4.2 - MCP Integration
  *
  * Handles Model Context Protocol server lifecycle and tool mapping.
  * Supports both stdio and HTTP/SSE transports with auto-detection.
@@ -13,6 +13,7 @@ import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 import type { MCPServerConfig, MCPTool } from './types';
 import { z } from 'zod';
+import { SDK_VERSION } from '../core/version';
 
 // ==================== TYPES ====================
 
@@ -169,7 +170,7 @@ async function getOrCreateConnection(
     });
   }
 
-  const client = new Client({ name: 'OneAgent', version: '3.0.0' }, { capabilities: {} });
+  const client = new Client({ name: 'OneAgent', version: SDK_VERSION }, { capabilities: {} });
 
   await client.connect(transport);
 
