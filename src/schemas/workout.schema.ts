@@ -65,7 +65,7 @@ export type FullWorkoutProgram = z.infer<typeof FullWorkoutProgramSchema>;
  * Workout generation output schema
  */
 export const WorkoutGenerationOutputSchema = z.object({
-  program: z.any(), // Will be validated by FullWorkoutProgramSchema
+  program: z.unknown(), // Will be validated by FullWorkoutProgramSchema
   summary: z.string().min(1),
   warnings: z.array(z.string()),
   recommendations: z.array(z.string()),

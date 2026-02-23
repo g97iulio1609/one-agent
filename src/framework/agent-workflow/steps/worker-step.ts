@@ -195,8 +195,7 @@ export async function executeWorkerStep(
     console.log(`[WorkerStep] ${agentId} system prompt: ${systemPrompt.length} chars`);
 
     // Load tools
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const tools: Record<string, any> = {};
+    const tools: Record<string, unknown> = {};
 
     const registryTools = getAgentTools(agentId);
     if (registryTools) {

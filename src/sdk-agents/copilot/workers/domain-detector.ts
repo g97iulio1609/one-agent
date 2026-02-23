@@ -1,6 +1,6 @@
 /**
  * Domain Detector Worker
- * 
+ *
  * SDK 4.2 worker that detects the domain from a user query.
  */
 import { z } from 'zod';
@@ -12,10 +12,14 @@ import { z } from 'zod';
 export const DomainDetectorInputSchema = z.object({
   query: z.string(),
   context: z.record(z.string(), z.unknown()).optional(),
-  conversationHistory: z.array(z.object({
-    role: z.enum(['user', 'assistant', 'system']),
-    content: z.string(),
-  })).optional(),
+  conversationHistory: z
+    .array(
+      z.object({
+        role: z.enum(['user', 'assistant', 'system']),
+        content: z.string(),
+      })
+    )
+    .optional(),
 });
 
 export const DomainDetectorOutputSchema = z.object({

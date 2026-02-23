@@ -17,7 +17,6 @@
 import type { z } from 'zod';
 
 // Tool type (AI SDK tool definitions)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ToolDefinition = Record<string, unknown>;
 
 // ==================== REGISTRY STATE ====================

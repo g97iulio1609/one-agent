@@ -1,6 +1,6 @@
 /**
  * General Chat Worker
- * 
+ *
  * SDK 4.2 worker for handling general conversation queries.
  */
 import { z } from 'zod';
@@ -12,10 +12,14 @@ import { z } from 'zod';
 export const GeneralChatInputSchema = z.object({
   query: z.string(),
   userId: z.string(),
-  conversationHistory: z.array(z.object({
-    role: z.enum(['user', 'assistant', 'system']),
-    content: z.string(),
-  })).optional(),
+  conversationHistory: z
+    .array(
+      z.object({
+        role: z.enum(['user', 'assistant', 'system']),
+        content: z.string(),
+      })
+    )
+    .optional(),
 });
 
 export const GeneralChatOutputSchema = z.object({

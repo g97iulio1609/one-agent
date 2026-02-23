@@ -11,6 +11,7 @@
 
 import { getModelByTier } from '@giulio-leone/lib-ai';
 import { createAIProvider } from '@giulio-leone/lib-ai';
+import type { AIProviderType } from '@giulio-leone/lib-ai';
 import { createCostCalculator } from '../core/CostCalculator';
 import type { IAIProvider, ICostCalculator } from '../core/types';
 import { TOKEN_LIMITS } from '@giulio-leone/constants';
@@ -59,7 +60,7 @@ export async function createAIAgentConfig(
   // Passiamo esplicitamente la chiave recuperata (che può venire da Edge Config)
   const provider = createAIProvider([
     {
-      type: modelConfig.provider as any,
+      type: modelConfig.provider as AIProviderType,
       apiKey,
     },
   ]);

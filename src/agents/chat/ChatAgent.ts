@@ -186,7 +186,13 @@ export function createChatAgent(options: CreateChatAgentOptions = {}) {
     toolChoice: 'auto',
 
     // prepareCall per configurazione dinamica
-    prepareCall: async ({ options, ...settings }: { options: ChatCallOptions; [key: string]: unknown }) => {
+    prepareCall: async ({
+      options,
+      ...settings
+    }: {
+      options: ChatCallOptions;
+      [key: string]: unknown;
+    }) => {
       // Get config from AIModelService (Standardized Model Selection)
       // This respects admin dashboard settings for CHAT_GENERATION
       const config = await AIModelService.getFeatureModelConfig(

@@ -251,7 +251,12 @@ function buildDelegationTools(
             age: Number(userProfile?.age ?? 30),
             gender: (userProfile?.gender as 'male' | 'female' | 'other') ?? 'male',
             activityLevel:
-              (userProfile?.activityLevel?.toString().toUpperCase() as any) ?? 'MODERATE',
+              (userProfile?.activityLevel?.toString().toUpperCase() as
+                | 'SEDENTARY'
+                | 'LIGHT'
+                | 'MODERATE'
+                | 'ACTIVE'
+                | 'VERY_ACTIVE') ?? 'MODERATE',
           };
 
           const result = await generateNutritionPlan({
@@ -279,8 +284,11 @@ function buildDelegationTools(
             message: `Piano nutrizionale generato: ${result.output?.plan.name}. Focus: ${input.goal}.`,
             data: result.output?.plan,
           };
-        } catch (e: any) {
-          return { success: false, message: `Errore generazione nutrizione: ${e.message}` };
+        } catch (e: unknown) {
+          return {
+            success: false,
+            message: `Errore generazione nutrizione: ${e instanceof Error ? e.message : String(e)}`,
+          };
         }
       },
     }),
@@ -311,7 +319,7 @@ function buildDelegationTools(
             age: Number(userProfile?.age ?? 30),
             gender: (userProfile?.gender as 'male' | 'female' | 'other') ?? 'male',
             experienceLevel: 'intermediate' as const, // Default, hard to infer without asking
-            fitnessLevel: (userProfile?.activityLevel as any) ?? 'moderate',
+            fitnessLevel: (userProfile?.activityLevel as string) ?? 'moderate',
           };
 
           const result = await generateWorkoutProgram({
@@ -338,8 +346,11 @@ function buildDelegationTools(
             message: `Programma allenamento generato: ${result.output?.program.name}. Split: ${result.output?.program.splitType}.`,
             data: result.output?.program,
           };
-        } catch (e: any) {
-          return { success: false, message: `Errore generazione workout: ${e.message}` };
+        } catch (e: unknown) {
+          return {
+            success: false,
+            message: `Errore generazione workout: ${e instanceof Error ? e.message : String(e)}`,
+          };
         }
       },
     }),
@@ -394,7 +405,7 @@ function buildDelegationTools(
             estimatedMinutes: z.number().default(30),
           })
         ),
-        events: z.array(z.any()).default([]),
+        events: z.array(z.record(z.string(), z.unknown())).default([]),
       }),
       execute: async (input: {
         date: string;
@@ -403,7 +414,7 @@ function buildDelegationTools(
           priority: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
           estimatedMinutes: number;
         }>;
-        events: any[];
+        events: Array<Record<string, unknown>>;
       }) => {
         try {
           const { generateAgenda } = await import('@giulio-leone/oneagenda-core');
@@ -436,8 +447,11 @@ function buildDelegationTools(
             message: `Agenda generata per il ${input.date}. ${result.plan.summary.taskCount} task pianificati.`,
             data: result,
           };
-        } catch (e: any) {
-          return { success: false, message: `Errore OneAgenda: ${e.message}` };
+        } catch (e: unknown) {
+          return {
+            success: false,
+            message: `Errore OneAgenda: ${e instanceof Error ? e.message : String(e)}`,
+          };
         }
       },
     }),

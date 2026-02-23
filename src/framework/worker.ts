@@ -33,8 +33,7 @@ interface WorkerOptions {
   /** Override model for this execution */
   model?: string;
   /** Additional tools to include */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  additionalTools?: Record<string, any>;
+  additionalTools?: Record<string, unknown>;
   /** Skip MCP tool loading */
   skipMCPTools?: boolean;
   /** Tool choice strategy */
@@ -370,10 +369,8 @@ function injectPromptVariables(template: string, context: Record<string, unknown
 async function loadToolsGracefully(
   manifest: AgentManifest,
   options: WorkerOptions
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-): Promise<Record<string, any>> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const tools: Record<string, any> = {};
+): Promise<Record<string, unknown>> {
+  const tools: Record<string, unknown> = {};
 
   // Load local tools from registry (bundler-safe)
   const { getAgentTools } = await import('./registry');

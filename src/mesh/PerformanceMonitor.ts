@@ -79,14 +79,18 @@ export class PerformanceMonitor {
    * Get statistics for a specific operation
    */
   getStats(operation: string): PerformanceStats | null {
-    const operationMetrics = this.metrics.filter((m: any) => m.operation === operation);
+    const operationMetrics = this.metrics.filter(
+      (m: PerformanceMetric) => m.operation === operation
+    );
 
     if (operationMetrics.length === 0) {
       return null;
     }
 
-    const durations = operationMetrics.map((m: any) => m.duration).sort((a, b) => a - b);
-    const totalDuration = durations.reduce((sum: any, d: any) => sum + d, 0);
+    const durations = operationMetrics
+      .map((m: PerformanceMetric) => m.duration)
+      .sort((a, b) => a - b);
+    const totalDuration = durations.reduce((sum: number, d: number) => sum + d, 0);
 
     // Safety check - should never happen due to check above, but TypeScript needs it
     if (durations.length === 0) {

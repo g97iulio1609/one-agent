@@ -55,14 +55,10 @@ export async function connectToMCPServers(
  * Convert MCP tools to AI SDK Tool format
  *
  * This creates a tools object that can be passed to generateText or streamText.
- * Note: Due to AI SDK's type inference, the resulting tools may have `any` types.
+ * Note: Due to AI SDK's type inference, the resulting tools may have dynamic types.
  */
-export function mcpToolsToAiSdk(
-  mcpTools: MCPTool[]
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-): Record<string, any> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const tools: Record<string, any> = {};
+export function mcpToolsToAiSdk(mcpTools: MCPTool[]): Record<string, unknown> {
+  const tools: Record<string, unknown> = {};
 
   for (const mcpTool of mcpTools) {
     const schema = jsonSchemaToZod(mcpTool.inputSchema);
@@ -177,18 +173,20 @@ async function getOrCreateConnection(
   // Fetch available tools
   const { tools: serverTools } = await client.listTools();
 
-  const tools: MCPTool[] = serverTools.map((t: { name: string; description?: string; inputSchema?: Record<string, unknown> }) => ({
-    name: t.name,
-    description: t.description ?? '',
-    inputSchema: t.inputSchema as Record<string, unknown>,
-    execute: async (args: unknown) => {
-      const result = await client.callTool({
-        name: t.name,
-        arguments: args as Record<string, unknown>,
-      });
-      return result.content;
-    },
-  }));
+  const tools: MCPTool[] = serverTools.map(
+    (t: { name: string; description?: string; inputSchema?: Record<string, unknown> }) => ({
+      name: t.name,
+      description: t.description ?? '',
+      inputSchema: t.inputSchema as Record<string, unknown>,
+      execute: async (args: unknown) => {
+        const result = await client.callTool({
+          name: t.name,
+          arguments: args as Record<string, unknown>,
+        });
+        return result.content;
+      },
+    })
+  );
 
   const connection: MCPConnection = { client, transport, tools };
   connections.set(name, connection);
@@ -227,8 +225,8 @@ function jsonSchemaToZod(schema: Record<string, unknown>): z.ZodSchema {
     return z.object(shape);
   }
 
-  // Fallback to any
-  return z.any();
+  // Fallback to unknown
+  return z.unknown();
 }
 
 /**
@@ -255,7 +253,7 @@ function jsonSchemaPropertyToZod(propSchema: Record<string, unknown>): z.ZodType
       break;
     case 'array': {
       const items = propSchema.items as Record<string, unknown> | undefined;
-      const itemType = items ? jsonSchemaPropertyToZod(items) : z.any();
+      const itemType = items ? jsonSchemaPropertyToZod(items) : z.unknown();
       zodType = z.array(itemType);
       break;
     }
@@ -264,12 +262,12 @@ function jsonSchemaPropertyToZod(propSchema: Record<string, unknown>): z.ZodType
       if (nested) {
         zodType = jsonSchemaToZod(propSchema);
       } else {
-        zodType = z.record(z.string(), z.any());
+        zodType = z.record(z.string(), z.unknown());
       }
       break;
     }
     default:
-      zodType = z.any();
+      zodType = z.unknown();
   }
 
   if (description) {

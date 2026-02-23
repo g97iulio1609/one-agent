@@ -41,7 +41,9 @@ import { z } from 'zod';
  */
 export const CopilotInputSchema = z.object({
   goal: z.string().describe('User goal or query'),
-  domain: z.enum(['nutrition', 'workout', 'analytics', 'oneagenda', 'flight', 'general']).optional(),
+  domain: z
+    .enum(['nutrition', 'workout', 'analytics', 'oneagenda', 'flight', 'general'])
+    .optional(),
   conversationId: z.string().optional(),
   context: z.record(z.string(), z.unknown()).optional(),
 });

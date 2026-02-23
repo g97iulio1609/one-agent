@@ -68,8 +68,11 @@ export function isError(error: unknown): error is Error {
  * Base mesh agent type - Union type for agent instances
  * Used when generics cannot be determined at compile time
  */
-export type BaseMeshAgent = import('../mesh/MeshAgent').MeshAgent<any, any>;
-export type BaseMeshCoordinator = import('../mesh/MeshCoordinator').MeshCoordinator<any, any>;
+export type BaseMeshAgent = import('../mesh/MeshAgent').MeshAgent<unknown, unknown>;
+export type BaseMeshCoordinator = import('../mesh/MeshCoordinator').MeshCoordinator<
+  unknown,
+  unknown
+>;
 export type BaseMeshAgentOrCoordinator = BaseMeshAgent | BaseMeshCoordinator;
 
 /**

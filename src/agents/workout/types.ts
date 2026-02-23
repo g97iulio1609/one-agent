@@ -7,8 +7,17 @@
 
 import type { Checkpoint } from '../../mesh/types';
 // Import shared types
-import type { MuscleGroup } from "@giulio-leone/types-workout";
-import type { Exercise as SharedExercise, WorkoutDay as SharedWorkoutDay, WorkoutWeek as SharedWorkoutWeek, WorkoutProgram as SharedWorkoutProgram, ExerciseSet as SharedExerciseSet, SetGroup as SharedSetGroup, ExerciseCategory as SharedExerciseCategory, DifficultyLevel as SharedDifficultyLevel } from "@giulio-leone/types-workout";
+import type { MuscleGroup } from '@giulio-leone/types-workout';
+import type {
+  Exercise as SharedExercise,
+  WorkoutDay as SharedWorkoutDay,
+  WorkoutWeek as SharedWorkoutWeek,
+  WorkoutProgram as SharedWorkoutProgram,
+  ExerciseSet as SharedExerciseSet,
+  SetGroup as SharedSetGroup,
+  ExerciseCategory as SharedExerciseCategory,
+  DifficultyLevel as SharedDifficultyLevel,
+} from '@giulio-leone/types-workout';
 
 export type {
   SharedExercise,
@@ -27,11 +36,11 @@ export type {
 // ============================================================================
 
 export interface Logger {
-  debug(message: string, ...args: any[]): void;
-  info(message: string, ...args: any[]): void;
-  warn(message: string, ...args: any[]): void;
-  error(message: string, ...args: any[]): void;
-  level(level: string, message: string, ...args: any[]): void;
+  debug(message: string, ...args: unknown[]): void;
+  info(message: string, ...args: unknown[]): void;
+  warn(message: string, ...args: unknown[]): void;
+  error(message: string, ...args: unknown[]): void;
+  level(level: string, message: string, ...args: unknown[]): void;
 }
 
 export type Confidence = 'low' | 'medium' | 'high';
@@ -699,7 +708,7 @@ export interface LoadAnalysis {
       weekNumber: number;
       dayNumber?: number;
       exerciseIndex?: number;
-      change: Record<string, any>;
+      change: Record<string, unknown>;
     };
   }>;
 
@@ -750,7 +759,7 @@ export interface QAIssue {
     weekNumber?: number;
     dayNumber?: number;
     exerciseIndex?: number;
-    change: Record<string, any>;
+    change: Record<string, unknown>;
     explanation: string;
   };
 }
@@ -956,7 +965,7 @@ export interface PlannedGoal {
   description: string;
   timeHorizon: 'SHORT_TERM' | 'MEDIUM_TERM' | 'LONG_TERM';
   targetDate?: string;
-  milestones?: any[];
+  milestones?: Array<{ title: string; targetDate?: string; description?: string }>;
   successMetrics?: string[];
 }
 
@@ -1062,11 +1071,11 @@ export interface NutritionContext {
 }
 
 export interface UserMemoryContext {
-  preferences: Record<string, any>;
+  preferences: Record<string, unknown>;
   injuries: string[];
   notes?: string;
   fitnessLevel?: ExperienceLevel;
-  recentEvents?: Record<string, any>[];
+  recentEvents?: Record<string, unknown>[];
 }
 
 export type WorkoutMeshContext = AgentContext;
