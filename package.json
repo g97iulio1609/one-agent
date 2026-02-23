@@ -47,7 +47,6 @@
   "dependencies": {
     "@ai-sdk/anthropic": "3.0.39",
     "@ai-sdk/openai": "3.0.26",
-    "@giulio-leone/constants": "workspace:*",
     "@giulio-leone/lib-ai": "workspace:*",
     "@giulio-leone/schemas": "workspace:*",
     "@giulio-leone/types": "workspace:*",

@@ -8,7 +8,7 @@ import { generateText, Output } from 'ai';
 import { getModelByTier, createCustomModel } from './utils/model-factory';
 import { AIProviderConfigService } from '@giulio-leone/lib-ai';
 import type { ProviderName } from '@giulio-leone/lib-ai';
-import { TOKEN_LIMITS } from '@giulio-leone/constants';
+import { TOKEN_LIMITS } from '@giulio-leone/lib-shared';
 
 interface ExtractionContext {
   message: string;

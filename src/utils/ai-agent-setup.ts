@@ -14,7 +14,7 @@ import { createAIProvider } from '@giulio-leone/lib-ai';
 import type { AIProviderType } from '@giulio-leone/lib-ai';
 import { createCostCalculator } from '../core/CostCalculator';
 import type { IAIProvider, ICostCalculator } from '../core/types';
-import { TOKEN_LIMITS } from '@giulio-leone/constants';
+import { TOKEN_LIMITS } from '@giulio-leone/lib-shared';
 
 export interface AIAgentConfig {
   provider: IAIProvider;
