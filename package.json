@@ -21,6 +21,10 @@
     "./api": {
       "types": "./src/framework/api.ts",
       "default": "./src/framework/api.ts"
+    },
+    "./hooks": {
+      "types": "./src/hooks/index.ts",
+      "default": "./src/hooks/index.ts"
     }
   },
   "files": [
@@ -67,7 +71,9 @@
     "@giulio-leone/oneagenda-core": "workspace:*",
     "@prisma/client": "^7.2.0",
     "@workflow/world-postgres": "4.1.0-beta.27",
-    "zod": "^4.3.5"
+    "zod": "^4.3.5",
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
   },
   "peerDependenciesMeta": {
     "@workflow/world-postgres": {

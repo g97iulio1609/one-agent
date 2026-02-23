@@ -47,3 +47,6 @@ export * from './registry';
 
 // Utils
 export * from './utils/ai-agent-setup';
+
+// Hooks (merged from @giulio-leone/one-agent-hooks)
+export * from './hooks';
