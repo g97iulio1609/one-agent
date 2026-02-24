@@ -9,7 +9,7 @@
  */
 
 // Version (single source of truth)
-export { SDK_VERSION, SDK_MAJOR, SDK_MINOR } from './core/version';
+export { SDK_VERSION } from './core/version';
 export { SDK_VERSION as VERSION } from './core/version';
 
 // Core
@@ -31,8 +31,7 @@ export * from './schemas/workout.schema';
 
 // Mesh
 export * from './mesh/types';
-export { MeshAgent } from './mesh/MeshAgent';
-export { MeshCoordinator, type CoordinatorConfig } from './mesh/MeshCoordinator';
+
 export * from './mesh/PerformanceMonitor';
 export * from './mesh/SimpleCache';
 

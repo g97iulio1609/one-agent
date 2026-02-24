@@ -6,6 +6,7 @@
  */
 
 import type { z } from 'zod';
+export { handleError } from '@giulio-leone/lib-ai';
 
 /**
  * Macros per 100g - Standard nutritional macro structure
@@ -42,19 +43,6 @@ export type JsonValue =
  */
 export interface Metadata {
   [key: string]: JsonValue;
-}
-
-/**
- * Error handling helper - Converts unknown error to Error
- */
-export function handleError(error: unknown): Error {
-  if (error instanceof Error) {
-    return error;
-  }
-  if (typeof error === 'string') {
-    return new Error(error);
-  }
-  return new Error(String(error));
 }
 
 /**
