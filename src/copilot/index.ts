@@ -17,3 +17,6 @@ export * from './hooks';
 
 // Providers for domain context
 export * from './providers';
+
+// Framework (MCP tool factories)
+export * from './framework';
