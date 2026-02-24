@@ -4,7 +4,6 @@ export default defineConfig({
   entry: {
     index: 'src/index.ts',
     'framework/index': 'src/framework/index.ts',
-    'framework/api': 'src/framework/api.ts',
     'chat/index': 'src/chat/index.ts',
     'chat/client': 'src/chat/client.ts',
     'chat/types': 'src/chat/types/index.ts',
@@ -23,9 +22,6 @@ export default defineConfig({
     // Peer / optional deps
     /^@giulio-leone\//,
     /^@prisma\//,
-    /^@workflow\//,
-    'workflow',
-    /^workflow\//,
     // React (for chat UI components)
     'react',
     'react-dom',

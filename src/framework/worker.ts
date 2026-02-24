@@ -25,7 +25,21 @@ import type { AgentManifest, Context, ExecutionResult, ExecutionMode } from './t
 import { OAUTH_PROVIDERS } from './types';
 import { connectToMCPServers, mcpToolsToAiSdk } from './mcp';
 import { loadAgentSkills } from './loader';
-import { estimateTokens, getNestedValue } from './agent-workflow/helpers';
+
+/** Rough token count estimate: ~4 chars per token */
+function estimateTokens(...texts: (string | undefined)[]): number {
+  return texts.reduce((sum, t) => sum + Math.ceil((t?.length ?? 0) / 4), 0);
+}
+
+/** Safely traverse nested object by dot-separated path */
+function getNestedValue(obj: Record<string, unknown>, path: string): unknown {
+  return path.split('.').reduce<unknown>((cur, key) => {
+    if (cur && typeof cur === 'object' && key in (cur as Record<string, unknown>)) {
+      return (cur as Record<string, unknown>)[key];
+    }
+    return undefined;
+  }, obj);
+}
 
 // ==================== TYPES ====================
 

@@ -728,3 +728,18 @@ export interface WorkflowEvent {
   data?: unknown;
   timestamp: Date;
 }
+
+// ==================== WORKFLOW TYPES ====================
+
+/** Canonical workflow type identifiers stored in DB */
+export const WORKFLOW_TYPES = {
+  WORKOUT_GENERATION: 'workout-generation',
+  NUTRITION_GENERATION: 'nutrition-generation',
+  AGENDA_PLANNING: 'agenda-planning',
+  EXERCISE_GENERATION: 'exercise-generation',
+  FOOD_GENERATION: 'food-generation',
+  SHOPPING_GENERATION: 'shopping-generation',
+  COPILOT_CHAT: 'copilot-chat',
+} as const;
+
+export type WorkflowType = (typeof WORKFLOW_TYPES)[keyof typeof WORKFLOW_TYPES];

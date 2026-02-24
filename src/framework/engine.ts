@@ -180,30 +180,7 @@ export async function executeNode<TOutput = unknown>(
     context.meta.status = 'running';
     context.meta.updatedAt = new Date();
 
-    // Check for durable execution mode (v4.0+)
-    // Both Manager and Worker agents use executeDurable() which routes to agentWorkflow()
-    // agentWorkflow() handles both modes:
-    // - Worker: executeWorkerMode() - direct ToolLoopAgent execution
-    // - Manager: executeManagerMode() - orchestrates WORKFLOW.md steps with WDK durability
-    if (manifest.config.executionMode === 'durable') {
-      const agentType = isManager(manifest) ? 'Manager' : 'Worker';
-      console.log(`[Engine] Executing ${agentType} in DURABLE mode: ${manifest.id}`);
-
-      // Dynamic import to avoid bundling WDK when not needed
-      const { executeDurable } = await import('./durable');
-
-      // Set basePath for proper nested agent resolution
-      context.basePath = manifest.path;
-
-      // executeDurable() -> agentWorkflow() handles both Manager and Worker modes
-      // - Manager: orchestrates workflow steps via executeManagerMode()
-      // - Worker: direct execution via executeWorkerMode()
-      return executeDurable<TOutput>(manifest, validatedInput, context, {
-        resumeFromRunId,
-      });
-    }
-
-    // Standard (non-durable) execution
+    // Standard execution
     let result: ExecutionResult<TOutput>;
 
     if (isManager(manifest)) {

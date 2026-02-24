@@ -18,10 +18,6 @@
       "import": "./dist/framework/index.js",
       "require": "./dist/framework/index.cjs"
     },
-    "./api": {
-      "types": "./src/framework/api.ts",
-      "default": "./src/framework/api.ts"
-    },
     "./hooks": {
       "types": "./src/hooks/index.ts",
       "default": "./src/hooks/index.ts"
@@ -89,8 +85,6 @@
     "@giulio-leone/types": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.26.0",
     "@openrouter/ai-sdk-provider": "6.0.0-alpha.1",
-    "@workflow/ai": "4.0.1-beta.44",
-    "@workflow/core": "4.0.1-beta.36",
     "ai": "6.0.77",
     "yaml": "^2.8.2",
     "zod": "4.3.6"

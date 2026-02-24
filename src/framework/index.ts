@@ -1,10 +1,8 @@
 /**
- * OneAgent SDK v4.2 - Public API
+ * OneAgent SDK v5.0 - Public API
  *
  * Fractal Agent Architecture with MCP Integration
- * v4.0: Added durable execution support
- * v4.1: Added streaming progress via getWritable() and AI-driven updates
- * v4.2: Added skill visibility, weighted progress, and abstracted workout patterns
+ * v5.0: Removed legacy WDK/durable execution (replaced by @giulio-leone/gaussflow-agent)
  *
  * @example
  * import { execute, createMesh } from './framework';
@@ -18,10 +16,6 @@
  *   agents: ['agents/exercise-selection', 'agents/workout-planning']
  * });
  * const result = await mesh.run('agents/workout-coordinator', input);
- *
- * // Durable execution with streaming (v4.1)
- * // Use createAgentDurableResponse() in API routes for SSE streaming
- * import { createAgentDurableResponse } from '@giulio-leone/one-agent/api';
  */
 
 // ==================== ENGINE ====================
@@ -30,19 +24,6 @@ export type { MeshConfig } from './engine';
 
 // ==================== WORKER ====================
 export { executeWorker, buildSystemPrompt } from './worker';
-
-// ==================== DURABLE (v4.0) ====================
-export { executeDurable, getDurableWorkflowStatus, cancelDurableWorkflow } from './durable';
-
-// ==================== RUNTIME BOOTSTRAP ====================
-export {
-  initializeGaussFlowRuntime,
-  isGaussFlowRuntimeAvailable,
-  getGaussFlowRuntimeStatus,
-  initializeWDKWorld,
-  isWDKWorldAvailable,
-  getWDKWorldStatus,
-} from './wdk-world';
 
 // ==================== WORKFLOW ====================
 export { executeWorkflow } from './workflow';
@@ -122,13 +103,6 @@ export type {
   AgentProgressConfig,
   AgentProgressStep,
 
-  // Durability (v4.0)
-  DurabilityConfig,
-  DurableExecutionResult,
-  DurableExecuteOptions,
-  WorkflowRunStatus,
-  WorkflowEvent,
-
   // Workflow
   WorkflowDef,
   WorkflowStep,
@@ -163,33 +137,14 @@ export type {
 export {
   DEFAULT_AGENT_CONFIG,
   DEFAULT_RETRY_CONFIG,
-  DEFAULT_DURABILITY_CONFIG,
   AGENT_TIMEOUT_PRESETS,
   // v4.1: Progress schema and instructions
   ProgressFieldSchema,
   PROGRESS_PROMPT_INSTRUCTIONS,
   // v4.2: OAuth providers
   OAUTH_PROVIDERS,
+  // v5.0: Workflow types
+  WORKFLOW_TYPES,
 } from './types';
 
-export type { AgentTimeoutPreset, OAuthProvider } from './types';
-
-// ==================== SDK 4.0 PRESETS ====================
-export {
-  DURABILITY_PRESETS,
-  AGENT_CONFIG_PRESETS,
-  WORKFLOW_TYPES,
-  resolveDurabilityPreset,
-  createDurableAgentConfig,
-} from './sdk4-presets';
-
-export type { DurabilityPreset, AgentConfigPreset, WorkflowType } from './sdk4-presets';
-
-// ==================== API HELPERS (v4.1) ====================
-export { createAgentDurableResponse, createAgentStreamResponse, createProgressEvent } from './api';
-
-export type { CreateAgentDurableResponseParams } from './api';
-
-// ==================== AGENT WORKFLOW (v4.1) ====================
-export { agentWorkflow } from './agent-workflow';
-export type { AgentWorkflowParams, AgentWorkflowResult } from './agent-workflow';
+export type { AgentTimeoutPreset, OAuthProvider, WorkflowType } from './types';
