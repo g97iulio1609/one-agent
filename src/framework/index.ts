@@ -7,6 +7,9 @@
  *   import { execute } from '@giulio-leone/one-agent/framework/engine';
  */
 
+// ==================== ENGINE (server-only, safe in app-route context) ====================
+export { execute, executeNode } from './engine';
+
 // ==================== PARSER ====================
 export { parseWorkflow, hasWorkflow } from './parser';
 
