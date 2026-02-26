@@ -39,11 +39,10 @@ export * from './mesh/SimpleCache';
 // Copilot Agent (usa ChatAgent per i flussi moderni)
 export * from './agents/copilot';
 
-// Chat Agent (AI SDK v6 ToolLoopAgent)
-export * from './agents/chat';
+// Chat Agent — server-only (imports lib-ai), import from '@giulio-leone/one-agent/chat'
+// export * from './agents/chat';
 
-// Agent Registry
-export * from './registry';
+// Agent Registry — server-only, import directly from '@giulio-leone/one-agent/registry/*'
 
-// Utils
-export * from './utils/ai-agent-setup';
+// Utils — server-only, import directly from '@giulio-leone/one-agent/utils/*'
+// export * from './utils/ai-agent-setup';

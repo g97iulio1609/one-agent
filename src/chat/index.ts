@@ -1,5 +1,5 @@
 /**
- * @onecoach/one-agent/chat
+ * @giulio-leone/one-agent/chat
  *
  * Chat services for conversation management.
  * TODO: Implement full ConversationService with database backing.

@@ -42,7 +42,7 @@ cases:
     store: domainResponse
     
   oneagenda:
-    call: @onecoach/oneagenda-core:sdk-agents/agenda-planner
+    call: @giulio-leone/oneagenda-core:sdk-agents/agenda-planner
     input:
       userId: ${input.userId}
       query: ${input.query}

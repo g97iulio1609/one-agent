@@ -1,8 +1,8 @@
 /**
- * @onecoach/one-agent/chat/types
+ * @giulio-leone/one-agent/chat/types
  *
  * Shared type definitions for the chat module.
- * TODO: Move to @onecoach/types-chat when stabilized.
+ * TODO: Move to @giulio-leone/types-chat when stabilized.
  */
 
 export type { UIMessage } from 'ai';

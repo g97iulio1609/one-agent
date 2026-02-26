@@ -1,5 +1,5 @@
 /**
- * @onecoach/one-agent/chat/client
+ * @giulio-leone/one-agent/chat/client
  *
  * Client-side chat hooks and components.
  * TODO: Implement full chat hooks with AI SDK integration.

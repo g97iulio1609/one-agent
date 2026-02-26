@@ -9,8 +9,8 @@
  * @since v4.1
  */
 
-import { FatalError } from 'workflow';
-import { start } from 'workflow/api';
+import { FatalError } from '@workflow/core';
+import { start } from '@workflow/core/runtime';
 import type { UIMessageChunk } from 'ai';
 import type { ProgressField } from '../../types';
 

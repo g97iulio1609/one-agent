@@ -7,7 +7,7 @@
  * @since v4.1
  */
 
-import { FatalError } from 'workflow';
+import { FatalError } from '@workflow/core';
 
 /**
  * Execute a Transform step (pure TypeScript function, no LLM).

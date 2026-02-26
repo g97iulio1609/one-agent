@@ -1,5 +1,5 @@
 /**
- * @onecoach/one-agent/hooks
+ * @giulio-leone/one-agent/hooks
  *
  * Shared hooks and UI components for agent integration.
  * Re-exports ProgressField from agent-contracts.
