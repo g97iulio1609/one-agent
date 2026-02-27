@@ -1,6 +1,6 @@
 {
   "name": "@giulio-leone/one-agent",
-  "version": "4.2.0-alpha.0",
+  "version": "0.15.0",
   "type": "module",
   "description": "OneAgent SDK 4.2 - AI agent framework with durable streaming, skill visibility, and weighted progress",
   "main": "./dist/index.cjs",
