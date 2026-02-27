@@ -165,7 +165,7 @@
     "@ai-sdk/openai": "3.0.26",
     "@modelcontextprotocol/sdk": "^1.11.0",
     "@giulio-leone/constants": "^0.13.0",
-    "@giulio-leone/oneagenda-core": "^0.8.0",
+    "@giulio-leone/oneagenda-core": "workspace:*",
     "@giulio-leone/lib-ai": "workspace:*",
     "@giulio-leone/lib-shared": "workspace:*",
     "@giulio-leone/schemas": "workspace:*",
