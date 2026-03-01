@@ -18,5 +18,6 @@ export * from './hooks';
 // Providers for domain context
 export * from './providers';
 
-// Framework (MCP tool factories)
-export * from './framework';
+// NOTE: Framework (MCP tool factories) is NOT re-exported here
+// to avoid pulling server-only AI SDK deps into client bundles.
+// Import from '@giulio-leone/one-agent/framework' directly.

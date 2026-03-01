@@ -57,6 +57,12 @@
       "import": "./dist/chat/utils.js",
       "require": "./dist/chat/utils.cjs",
       "default": "./src/chat/utils/index.ts"
+    },
+    "./server": {
+      "types": "./src/server.ts",
+      "import": "./dist/server.js",
+      "require": "./dist/server.cjs",
+      "default": "./src/server.ts"
     }
   },
   "files": [

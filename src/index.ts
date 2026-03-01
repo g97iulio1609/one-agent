@@ -5,6 +5,10 @@
  * Durable streaming, skill visibility, and weighted progress.
  * Following KISS, DRY, and SOLID principles.
  *
+ * NOTE: Server-only exports (VercelAIProvider, agents, ai-agent-setup)
+ * are available via '@giulio-leone/one-agent/server'.
+ * This barrel is safe for client components.
+ *
  * @packageDocumentation
  */
 
@@ -18,12 +22,9 @@ export * from './core/type-helpers';
 export * from './core/BaseAgent';
 export * from './core/CostCalculator';
 
-// Re-export core AI types
+// Re-export core AI types (type-only is safe for client)
 export { z } from 'zod';
 export type { LanguageModel, UIMessage } from 'ai';
-
-// Adapters
-export * from './adapters/VercelAIProvider';
 
 // Schemas
 export * from './schemas/nutrition.schema';
@@ -31,26 +32,16 @@ export * from './schemas/workout.schema';
 
 // Mesh
 export * from './mesh/types';
-
 export * from './mesh/PerformanceMonitor';
 export * from './mesh/SimpleCache';
-
-// Copilot Agent (usa ChatAgent per i flussi moderni)
-export * from './agents/copilot';
-
-// Chat Agent (AI SDK v6 ToolLoopAgent)
-export * from './agents/chat';
 
 // Agent Registry
 export * from './registry';
 
-// Utils
-export * from './utils/ai-agent-setup';
-
 // Hooks (merged from @giulio-leone/one-agent-hooks)
 export * from './hooks';
 
-// Copilot services (merged from lib-copilot)
+// Copilot services (merged from lib-copilot) — client-safe providers, hooks, components
 export * from './copilot';
 
 // Explicit re-exports to resolve ambiguity from duplicate export * statements

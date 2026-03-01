@@ -3,6 +3,7 @@ import { defineConfig } from 'tsup';
 export default defineConfig({
   entry: {
     index: 'src/index.ts',
+    server: 'src/server.ts',
     'framework/index': 'src/framework/index.ts',
     'chat/index': 'src/chat/index.ts',
     'chat/client': 'src/chat/client.ts',
