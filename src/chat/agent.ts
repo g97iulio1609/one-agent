@@ -321,7 +321,7 @@ export function createChatAgent(options: CreateChatAgentOptions = {}) {
 
           if (memoryContext.recommendations.length > 0) {
             dynamicInstructions += `\n\nRaccomandazioni:`;
-            memoryContext.recommendations.slice(0, 3).forEach((rec: any) => {
+            memoryContext.recommendations.slice(0, 3).forEach((rec: { message: string }) => {
               dynamicInstructions += `\n- ${rec.message}`;
             });
           }
@@ -351,7 +351,7 @@ Non seguire prescrizioni rigide - usa la tua conoscenza per determinare soluzion
       const toolNames = Object.keys(tools);
       if (toolNames.length > 0) {
         const toolCategories = new Set(
-          toolNames.map((name: any) => {
+          toolNames.map((name: string) => {
             if (name.startsWith('nutrition_')) return 'nutrizione';
             if (name.startsWith('workout_')) return 'allenamento';
             if (name.startsWith('food_')) return 'alimenti';

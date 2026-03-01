@@ -61,16 +61,16 @@ export async function buildExerciseContext(userId: string): Promise<CopilotConte
   });
 
   // Format recent exercises for context
-  const formattedRecentExercises = recentExercises.map((exercise: any) => ({
+  const formattedRecentExercises = recentExercises.map((exercise: { id: string; slug: string; exercise_translations: Array<{ name: string }>; exercise_muscles: Array<{ muscles: { id: string; name: string }; role: string }>; exercise_equipments: Array<{ equipments: { id: string; name: string } }> }) => ({
     id: exercise.id,
     slug: exercise.slug,
     name: exercise.exercise_translations[0]?.name || exercise.slug,
-    muscles: exercise.exercise_muscles.map((m: any) => ({
+    muscles: exercise.exercise_muscles.map((m: { muscles: { id: string; name: string }; role: string }) => ({
       id: m.muscles.id,
       name: m.muscles.name,
       role: m.role,
     })),
-    equipment: exercise.exercise_equipments.map((e: any) => ({
+    equipment: exercise.exercise_equipments.map((e: { equipments: { id: string; name: string } }) => ({
       id: e.equipments.id,
       name: e.equipments.name,
     })),

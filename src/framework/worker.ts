@@ -148,7 +148,7 @@ export async function executeWorker<TOutput = unknown>(
     const agent = new ToolLoopAgent({
       model,
       instructions: systemPrompt,
-      tools: tools as any,
+      tools: tools as Record<string, unknown>,
       stopWhen: stepCountIs(maxSteps),
       toolChoice: options.toolChoice ?? (Object.keys(tools).length > 0 ? 'auto' : 'none'),
       output: Output.object({

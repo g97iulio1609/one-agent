@@ -38,7 +38,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 import { useUnifiedChat } from '../../hooks/use-unified-chat';
-import type { UnifiedChatProps, ScreenContextType } from '../../types/unified-chat';
+import type { UnifiedChatProps, ScreenContextType, AIModel } from '../../types/unified-chat';
 import { cn } from './utils';
 
 // ============================================================================
@@ -623,7 +623,7 @@ export function UnifiedChat({
                 }
                 className="rounded-lg border border-neutral-200 bg-white px-2 py-1 text-sm dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
               >
-                {models.map((model: any) => (
+                {models.map((model: AIModel) => (
                   <option key={model.id} value={model.id}>
                     {model.displayName}
                   </option>

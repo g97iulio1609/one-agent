@@ -146,7 +146,7 @@ export async function buildAnalyticsContext(userId: string): Promise<CopilotCont
     },
     currentSnapshot: latestSnapshot,
     latestBodyMeasurement,
-    recentWorkoutSessions: recentWorkoutSessions.map((session: any) => ({
+    recentWorkoutSessions: recentWorkoutSessions.map((session: { id: string; programId: string; weekNumber: number; dayNumber: number; startedAt: Date; completedAt: Date | null }) => ({
       id: session.id,
       programId: session.programId,
       weekNumber: session.weekNumber,
@@ -155,7 +155,7 @@ export async function buildAnalyticsContext(userId: string): Promise<CopilotCont
       completedAt: session.completedAt?.toISOString() || null,
       completed: session.completedAt !== null,
     })),
-    recentNutritionLogs: recentNutritionLogs.map((log: any) => ({
+    recentNutritionLogs: recentNutritionLogs.map((log: { id: string; planId: string; date: Date; weekNumber: number; dayNumber: number; actualDailyMacros: unknown; waterIntake: unknown }) => ({
       id: log.id,
       planId: log.planId,
       date: log.date.toISOString(),

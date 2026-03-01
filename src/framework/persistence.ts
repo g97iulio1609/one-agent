@@ -223,7 +223,7 @@ export function createPrismaAdapter(prisma: PrismaClient): PersistenceAdapter {
         take: limit,
       });
 
-      return records.map((r: any) => ({
+      return records.map((r: { id: string; userId: string; agentId: string; domain: string; type: string; content: string; data: unknown; importance: number; summary: string | null; createdAt: Date; updatedAt: Date; expiresAt: Date | null }) => ({
         id: r.id,
         userId: r.userId,
         agentId: r.agentId,
@@ -352,7 +352,7 @@ export function createInMemoryAdapter(): PersistenceAdapter {
 
     async loadMemory(userId, domain, limit = 50): Promise<MemoryEntry[]> {
       return memories
-        .filter((m: any) => m.userId === userId && m.domain === domain)
+        .filter((m: MemoryEntry) => m.userId === userId && m.domain === domain)
         .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
         .slice(0, limit);
     },

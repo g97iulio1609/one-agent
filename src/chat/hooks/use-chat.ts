@@ -89,7 +89,7 @@ export function useCoachChat(options: UseCoachChatOptions = {}): CoachChatResult
     api,
     body: requestBody,
     credentials: 'include',
-    messages: initialMessages.map((message: any) => ({
+    messages: initialMessages.map((message: LegacyMessage) => ({
       id: message.id,
       role: message.role,
       parts: [{ type: 'text' as const, text: message.content }],
@@ -155,7 +155,7 @@ export function useCoachChat(options: UseCoachChatOptions = {}): CoachChatResult
 
       const content = parts
         .filter((p): p is MessagePart & { type: 'text' } => p.type === 'text')
-        .map((p: any) => p.text)
+        .map((p) => p.text)
         .join('');
 
       const uiMessage: UIMessage = {
@@ -220,7 +220,7 @@ export function useCoachChat(options: UseCoachChatOptions = {}): CoachChatResult
   const isStreaming = status === 'streaming';
 
   // Convert messages to UIMessage format
-  const uiMessages: UIMessage[] = messages.map((message: any) => {
+  const uiMessages: UIMessage[] = messages.map((message: AISDKMessage) => {
     const parts: MessagePart[] = (message.parts ?? []).map((part: AISDKMessagePart) => {
       switch (part.type) {
         case 'text':
@@ -249,7 +249,7 @@ export function useCoachChat(options: UseCoachChatOptions = {}): CoachChatResult
 
     const content = parts
       .filter((p): p is MessagePart & { type: 'text' } => p.type === 'text')
-      .map((p: any) => p.text)
+      .map((p) => p.text)
       .join('');
 
     return {
@@ -264,10 +264,10 @@ export function useCoachChat(options: UseCoachChatOptions = {}): CoachChatResult
   const setMessages = useCallback(
     (newMessages: UIMessage[]) => {
       aiSetMessages(
-        newMessages.map((message: any) => ({
+        newMessages.map((message: UIMessage) => ({
           id: message.id,
           role: message.role,
-          parts: message.parts?.map((part: any) => {
+          parts: message.parts?.map((part: UIMessage['parts'][number]) => {
             if (part.type === 'text') return { type: 'text', text: part.text };
             if (part.type === 'reasoning') return { type: 'reasoning', reasoning: part.reasoning };
             return part;

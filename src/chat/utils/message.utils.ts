@@ -99,7 +99,7 @@ export function truncateMessageContent(content: string, maxLength: number = 100)
  * Usa il primo messaggio utente, troncato.
  */
 export function extractConversationTitle(messages: ChatMessage[], maxLength: number = 50): string {
-  const firstUserMessage = messages.find((m: any) => m.role === 'user');
+  const firstUserMessage = messages.find((m: ChatMessage) => m.role === 'user');
   if (!firstUserMessage) return 'Nuova conversazione';
   return truncateMessageContent(firstUserMessage.content, maxLength);
 }
@@ -126,7 +126,7 @@ export function extractConversationPreview(
  * Filtra messaggi per ruolo.
  */
 export function filterMessagesByRole(messages: ChatMessage[], role: ChatRole): ChatMessage[] {
-  return messages.filter((m: any) => m.role === role);
+  return messages.filter((m: ChatMessage) => m.role === role);
 }
 
 /**
@@ -147,7 +147,7 @@ export function sortMessagesByDate(
  * Rimuove messaggi di sistema dalla lista (per display).
  */
 export function filterDisplayableMessages(messages: ChatMessage[]): ChatMessage[] {
-  return messages.filter((m: any) => m.role !== 'system');
+  return messages.filter((m: ChatMessage) => m.role !== 'system');
 }
 
 // ============================================================================
@@ -188,6 +188,6 @@ export function areMessagesEqual(a: ChatMessage, b: ChatMessage): boolean {
  * Trova messaggi nuovi confrontando due liste.
  */
 export function findNewMessages(current: ChatMessage[], previous: ChatMessage[]): ChatMessage[] {
-  const previousIds = new Set(previous.map((m: any) => m.id));
-  return current.filter((m: any) => !previousIds.has(m.id));
+  const previousIds = new Set(previous.map((m: ChatMessage) => m.id));
+  return current.filter((m: ChatMessage) => !previousIds.has(m.id));
 }

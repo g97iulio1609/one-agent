@@ -149,13 +149,13 @@ export function createAgenticTool<TEntity extends object>(
   const actionSchema = z.enum(actionNames);
 
   // Build unified target/changes schemas (union of all action schemas)
-  const allTargetSchemas = Object.values(actions).map((a: any) => a.targetSchema);
+  const allTargetSchemas = Object.values(actions).map((a: AgenticActionHandler<TEntity>) => a.targetSchema);
   const allChangesSchemas = Object.values(actions)
-    .filter((a: any) => a.changesSchema)
-    .map((a: any) => a.changesSchema!);
+    .filter((a: AgenticActionHandler<TEntity>) => a.changesSchema)
+    .map((a: AgenticActionHandler<TEntity>) => a.changesSchema!);
   const allNewDataSchemas = Object.values(actions)
-    .filter((a: any) => a.newDataSchema)
-    .map((a: any) => a.newDataSchema!);
+    .filter((a: AgenticActionHandler<TEntity>) => a.newDataSchema)
+    .map((a: AgenticActionHandler<TEntity>) => a.newDataSchema!);
 
   // Create union schemas (or passthrough if empty)
   const targetUnion =
@@ -335,8 +335,8 @@ Use indices for precise targeting or names for fuzzy matching.`,
       }
 
       // 8. Return result
-      const successCount = results.filter((r: any) => r.startsWith('✅')).length;
-      const errorCount = results.filter((r: any) => r.startsWith('❌')).length;
+      const successCount = results.filter((r: string) => r.startsWith('✅')).length;
+      const errorCount = results.filter((r: string) => r.startsWith('❌')).length;
 
       console.log(`[MCP:${name}] ✅ Complete:`, { successCount, errorCount });
 
