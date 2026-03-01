@@ -241,7 +241,7 @@ export const MessageBubble = memo(function MessageBubble({
   const markdownComponents = useMemo(
     () => ({
       code({
-        node,
+        _node,
         inline,
         className: codeClassName,
         children,

@@ -241,7 +241,7 @@ function buildDelegationTools(
         };
       }) => {
         try {
-          // @ts-ignore - Dynamic import to avoid circular dependency
+          // @ts-expect-error — dynamic import of lib-nutrition to avoid circular dependency
           const { generateNutritionPlan } = await import('@giulio-leone/lib-nutrition');
 
           // Map generic profile to NutritionUserProfile
@@ -310,7 +310,7 @@ function buildDelegationTools(
         sessionDuration: number;
       }) => {
         try {
-          // @ts-ignore - Dynamic import to avoid circular dependency
+          // @ts-expect-error — dynamic import of one-workout to avoid circular dependency
           const { generateWorkoutProgram } = await import('@giulio-leone/one-workout');
 
           const profile = {
