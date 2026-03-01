@@ -16,6 +16,7 @@
 'use client';
 
 import { useRef, useCallback, useState, useEffect } from 'react';
+import { useMediaQuery } from '@giulio-leone/hooks';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X,
@@ -90,14 +91,7 @@ export function UnifiedChat({
   const [suggestionsEnabled, setSuggestionsEnabled] = useState(true);
 
   // Detect screen size for responsive behavior
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 1024);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+  const isMobile = useMediaQuery('(max-width: 1023px)');
 
   // Build context override from props - include entityId for proper context
   const contextOverride = contextTypeProp
